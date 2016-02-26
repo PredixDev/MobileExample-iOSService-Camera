@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title> PM Barcode scanner iOS Native service Example</title>
+	<style>
+	div.scroll {
+		overflow: scroll;
+		max-height: 600px;
+		width: 90%;
+		position: relative;
+		top: 40px;
+		margin: 10px 20px;
+		color: orange;
+		border-style: dotted;
+		border-color: cyan;
+	}
+	.textarea {
+		width: 98%;
+		font-size: 20px;
+		color: blue;
+	}
+	.button {
+		background-color: cyan;
+		border: none;
+		color: white;
+		padding: 15px 32px;
+		text-align: center;
+		text-decoration: none;
+		display: inline-block;
+		font-size: 18px;
+		margin: 40px 80px;
+	}
+	</style>
+	<script src="Camera.js"></script>
+
+</head>
+
+<body>
+	<input type="button" class="button" value="Camera" onClick="cam.openCamera (50, 1, 0, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+	<input type="button" class="button" value="PhotoLibrary" onClick="cam.openCamera(50, 0, 2, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+	<input type="button" class="button" value="SavedPhotos" onClick="cam.openCamera(50, 2, 2, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+
+	<input type="button" class="button" value="Record" onClick="cam.openCamera(50, 1, 1, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+	<div  class="scroll" >
+		<div id="idstatus"> Press 'Scan Barcode'. </div>
+		<img id="idIMG" src="ge-predix-logo.png" alt="Predix-Mobile" style="width:181px;height:278px;">
+	</div>
+
+
+</body>
+</html>
