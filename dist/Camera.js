@@ -14,11 +14,31 @@ var Camera = function()
 
     var cameraURL = 'http://pmapi/camera';
     console.log('camera URL: '+ cameraURL);
+
+// 1. compression
+//   1-100
+// 2. picture/video - MediaType
+//   PICTURE		0	Allow selection of still pictures only. DEFAULT. Will return format specified via DestinationType
+//   VIDEO		1	Allow selection of video only, ONLY RETURNS URL
+//   ALLMEDIA	2	Allow selection from all media types
+//
+// 3. camera/saved/gallery - dONE - sourceType
+//   PHOTOLIBRARY	0	Choose image from picture library (same as SAVEDPHOTOALBUM for Android)
+//   CAMERA			1	Take picture from camera
+//   SAVEDPHOTOALBUM	2	Choose image from picture library (same as PHOTOLIBRARY for Android)
+//
+// 4. OUTPUT
+//   0 - FILE URI || 1 - src ||  x-Native-URI
+//
+// 5. edit
+//   0/1
+
     var options = {
       "compression":compression,
       "sourceType" : sourceType,
       "mediaType" : mediaType,
       "edit" : 0,
+      "output" : 0,
       "cameraDirection" : 0
     };
     //sending GET request to db service to fetch document.

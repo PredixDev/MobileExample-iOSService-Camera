@@ -221,11 +221,25 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
     private var state:State? = State.IDLE
 
+    let FILE_NAME_SUFFIX    = "PM_CAMERA_"
+    let imageDirName        = "images"
+    let movDirName          = "mov"
+    let maxImgFiles         = 5
+    let maxVideoFiles       = 5
+    var imageDirPath:String?
+    var videoDirPath:String?
+
+    override init() {
+
+        imageDirPath = PMCamera.createDir(imageDirName)
+        videoDirPath = PMCamera.createDir(movDirName)
+    }
+
     /**
         TODO
-    - parameter:
-    - errorReturnBlock      :   (NSData?) -> Void
-    - barcodeReturnBlock    :   (NSData?) -> Void
+    - Parameter errorReturnBlock      :   (NSData?) -> Void
+    - Parameter barcodeReturnBlock    :   (NSData?) -> Void
+    - Returns: :-)
     */
     func processRequest(options : Dictionary<String, AnyObject>, errorReturn : errorReturnBlock, barcodeReturn : barcodeReturnBlock)
     {
@@ -276,6 +290,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     //    MARK: private functions
     /**
     gets viewcontrolller which is presented on screen
+    - Returns: UIViewController
     */
     internal func getTopVC() ->UIViewController
     {
@@ -300,6 +315,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
     /**
      Busy error response
+     - Parameter errorReturn: errorReturnBlock
     */
     private func sendBusyResponse(errorReturn : errorReturnBlock)
     {
@@ -319,7 +335,9 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     }
 
     /**
-     returns a response to calling closure
+         returns a response to calling closure
+        - Parameter msg: todo
+        - Parameter type: todo
      */
     private func sendResponse(msg: String, type: ResponseType)
     {
@@ -370,7 +388,11 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
     }
 
-
+//  MARK: Options parser
+    /**
+        Compression option
+    - Returns : CGFloat
+    */
     private func getCompression() ->CGFloat
     {
         var toReturn:CGFloat
@@ -383,6 +405,9 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         return toReturn
     }
 
+    /**
+         Source type option
+     */
     private func getSourceType() ->UIImagePickerControllerSourceType
     {
         var toReturn:UIImagePickerControllerSourceType
@@ -395,6 +420,9 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         return toReturn
     }
 
+    /**
+     Media option
+     */
     private func getMediaType() ->Int
     {
         var toReturn:Int
@@ -407,6 +435,50 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         return toReturn
     }
 
+    /**
+         Output option
+     */
+    private func getOutputType() ->ResponseType
+    {
+        var toReturn:ResponseType
+        toReturn = .error
+        if let outputType = self.mOptions!["output"] as? Int
+        {
+//            toReturn = outputType ==
+            switch(outputType) {
+
+            case 0: //File URI
+                toReturn = (0 == self.getMediaType()) ? .Photo_location : .Video_location
+
+            case 1: // SRC
+                toReturn = (0 == self.getMediaType()) ? .Photo_src : .error
+
+            default:
+                toReturn = .error
+            }
+
+        }
+        return toReturn
+    }
+
+    /**
+         Editing option
+
+        - Returns: Bool
+     */
+    private func getEditingAllowed() ->Bool
+    {
+        var toReturn:Bool
+        toReturn = false
+        if let edit = self.mOptions!["edit"] as? Int
+        {
+            toReturn = (edit == 0) ? false : true
+
+        }
+        return toReturn
+    }
+
+//  TODO:
     private func getCameraDirection() ->Int
     {
         var toReturn:Int
@@ -419,17 +491,6 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         return toReturn
     }
 
-    private func getEditingAllowed() ->Bool
-    {
-        var toReturn:Bool
-        toReturn = false
-        if let edit = self.mOptions!["edit"] as? Int
-        {
-            toReturn = (edit == 0) ? false : true
-
-        }
-        return toReturn
-    }
 
 
 
@@ -470,54 +531,29 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         }
     }
 
-    /**
-        Video Save function
-    */
-    func video(videoPath: NSString, didFinishSavingWithError error: NSError?, contextInfo info: AnyObject) {
-        guard error == nil else
-        {
-            self.sendResponse("Error saving video! \(error)", type: .error)
-            return
-        }
-        self.sendResponse(videoPath as String, type: .Video_location)
-
-    }
 
 
 //  MARK: image picker delegate
+
     func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject])
     {
         picker .dismissViewControllerAnimated(true, completion: nil)
 
-//        if(self.getSourceType())
-//        {
-//
-//        }
-
+        var outputData:NSData?
         let mediaType = info[UIImagePickerControllerMediaType] as! NSString
         // Handle a movie capture
         if mediaType == kUTTypeMovie ||  mediaType == kUTTypeVideo
         {
-            let path = (info[UIImagePickerControllerMediaURL] as! NSURL).path
-            if UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(path!) {
-                UISaveVideoAtPathToSavedPhotosAlbum(path!, self, "video:didFinishSavingWithError:contextInfo:", nil)
-//                self.sendResponse(path!, isError: false)
-            }
-            else
-            {
-                PGSDKLogger.error("Error in saving video!");
-                self.sendResponse("Error in saving video!",type: .error)
-            }
+            let path = (info[UIImagePickerControllerMediaURL] as! NSURL)
+            outputData = NSData(contentsOfURL: path)!
+
         }
         else
         {
-    //        imageView.image=info[UIImagePickerControllerOriginalImage] as? UIImage
             let returnImg = info[UIImagePickerControllerOriginalImage] as? UIImage
-    //        let imageData = UIImagePNGRepresentation(returnImg!)
-            let imageData = UIImageJPEGRepresentation(returnImg!, self.getCompression())
-            let base64String = imageData!.base64EncodedStringWithOptions(.Encoding64CharacterLineLength)
-            self.sendResponse(base64String, type: .Photo_src)
+            outputData = UIImageJPEGRepresentation(returnImg!, self.getCompression())
         }
+        generateOutput(outputData!)
     }
 
 
@@ -525,8 +561,171 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     func imagePickerControllerDidCancel(picker: UIImagePickerController)
     {
         self.picker!.dismissViewControllerAnimated(true, completion: nil)
-//        PGSDKLogger.error("User cancelled!");
         self.sendResponse("User cancelled", type: .error)
+        self.generateUniqueFilename(.error)
+    }
+
+
+    private func generateOutput(data: NSData)
+    {
+        switch(getOutputType())
+        {
+            case .Photo_src:
+                print("send base64")
+                let base64String = data.base64EncodedStringWithOptions(.Encoding64CharacterLineLength)
+                self.sendResponse(base64String, type: .Photo_src)
+
+            case .Photo_location:
+                saveNSendResponse(data, type: .Photo_location)
+
+            case .Video_location:
+                saveNSendResponse(data, type: .Video_location)
+
+            case .error, .msg, .Video_src:
+                self.sendResponse("Unknown output format! 1", type: .error)
+
+        }
+    }
+
+
+
+
+//   MARK: File handling
+
+    /// Saves data in relevant format based on provided options and returns a response
+    ///
+    /// - Parameters:
+    ///     - dataToBeWritten: image or video data which needs to be persisted
+    ///     - type: type of response
+    private func saveNSendResponse(dataToBeWritten: NSData, type: ResponseType)
+    {
+        let savePath = generateUniqueFilename(type)
+
+
+
+
+        let isSaved = dataToBeWritten.writeToFile(savePath, atomically: true)
+        if isSaved
+        {
+            switch(type)
+            {
+
+            case .Photo_location:
+                self.sendResponse(savePath, type: .Photo_location)
+
+            case .Video_location:
+                self.sendResponse(savePath, type: .Video_location)
+
+            case .Photo_src, .Video_src, .msg, .error:
+                self.sendResponse("Unknown output format! 2", type: .error)
+            }
+
+        }
+        else
+        {
+            self.sendResponse("Error in saving file!", type: .error)
+        }
+    }
+
+    private func generateUniqueFilename(type: ResponseType) -> String {
+
+        var extensionName:String?
+        var documentPath:String?
+        switch(type)
+        {
+
+            case .Photo_location:
+                extensionName = "jpeg"
+                documentPath = imageDirPath
+
+            case .Video_location:
+                extensionName = "mov"
+            documentPath = videoDirPath
+
+            case .Photo_src, .Video_src, .msg, .error:
+                extensionName = "ERROR_FORMAT"
+                documentPath = "ERROR_FORMAT"
+        }
+
+        let guid = NSProcessInfo.processInfo().globallyUniqueString
+        let uniqueFileName = documentPath! + "/" + ("\(FILE_NAME_SUFFIX)\(guid).\(extensionName!)")
+
+        print("uniqueFileName: \(uniqueFileName)")
+//        self.listFiles(imageDirName)
+        return uniqueFileName
+    }
+
+    private func listFiles(dirName: String)
+    {
+        // We need just to get the documents folder url
+
+        let documentsUrl =  NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).first!
+        var dataPath:NSURL
+        if #available(iOS 9.0, *) {
+            dataPath = NSURL(fileURLWithPath: dirName, isDirectory: true, relativeToURL: documentsUrl)
+        } else {
+            dataPath = documentsUrl.URLByAppendingPathComponent(dirName, isDirectory: true)//NSURL(fileURLWithPath: dirName, isDirectory: true)
+        }
+
+        print("documentsUrl: \(documentsUrl)")
+
+        do {
+            let directoryContents = try NSFileManager.defaultManager().contentsOfDirectoryAtURL(dataPath, includingPropertiesForKeys: nil, options: NSDirectoryEnumerationOptions())
+            print("directoryContents: \(directoryContents)")
+
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }
+
+    }
+
+    private func deleteFile(name:String)
+    {
+        let paths = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)
+        if paths.count > 0 {
+            let dirPath = paths[0]
+            let fileName = "someFileName"
+            let filePath = NSString(format:"%@/%@.png", dirPath, fileName) as String
+            if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
+                do {
+                    try NSFileManager.defaultManager().removeItemAtPath(filePath)
+                    print("old image has been removed")
+                } catch {
+                    print("an error during a removing")
+                }
+            }
+        }
+
+    }
+
+
+    private static func createDir(dirName: String) -> String
+    {
+        let paths = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)
+        let documentsDirectory: AnyObject = paths[0]
+        let dataPath = documentsDirectory.stringByAppendingPathComponent(dirName)
+
+        var isDir : ObjCBool = false
+
+        if NSFileManager.defaultManager().fileExistsAtPath(dataPath, isDirectory: &isDir) {
+            if isDir {
+                // file exists & its a dir :-)
+            } else {
+                // file exists & isn't dir??? whoa- TODO:? :-(
+
+            }
+        }
+        else {
+            // file doesn't exist :-<
+            do {
+                try NSFileManager.defaultManager().createDirectoryAtPath(dataPath, withIntermediateDirectories: false, attributes: nil)
+            } catch let error as NSError {
+                print(error.localizedDescription);
+            }
+        }
+
+        return dataPath
+
     }
 
 }
