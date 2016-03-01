@@ -21,9 +21,27 @@ var Camera = function()
    }, function(err) {
      statusView.innerHTML = JSON.stringify(err);
    });
-
-
   }
+
+  this.deleteFiles = function(type, idimgView,idstatus)
+  {
+    if (null == statusView) {
+      statusView = idstatus;
+    }
+    if (null == imgView) {
+      imgView = idimgView;
+    }
+
+    var cameraURL = 'http://pmapi/camera/'+type;
+    console.log('camera delete URL: '+ cameraURL);
+
+    _sendDELETERequest(cameraURL, function(respData) {
+      statusView.innerHTML = JSON.stringify(respData);
+   }, function(err) {
+     statusView.innerHTML = JSON.stringify(err);
+   });
+  }
+
   this.openCamera = function(compression, sourceType, mediaType, idimgView, idstatus)
   {
     if (null == imgView) {
@@ -137,6 +155,22 @@ var Camera = function()
       };
       xhr.send();
     };
+
+    // sends a GET HTTP request
+      var _sendDELETERequest = function(url, successHandler, errorHandler) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('delete', url, true);
+        xhr.responseType = 'json';
+        xhr.onload = function() {
+          var status = xhr.status;
+          if (status >= 200 && status <= 299) {
+            successHandler && successHandler(xhr.response);
+          } else {
+            errorHandler && errorHandler(status);
+          }
+        };
+        xhr.send();
+      };
 
   // sends a POST HTTP request
 var _sendPOSTRequest = function(url, body, successHandler, errorHandler) {

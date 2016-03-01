@@ -40,6 +40,9 @@
 		<input type="button" class="button" value="ImagesList" onClick="cam.getFilesList ('image', document.getElementById('idIMG'), document.getElementById('idstatus'))">
 		<input type="button" class="button" value= "VideoList" onClick="cam.getFilesList ('video', document.getElementById('idIMG'), document.getElementById('idstatus'))">
 
+		<input type="button" class="button" value="DEL Images" onClick="cam.deleteFiles ('image', document.getElementById('idIMG'), document.getElementById('idstatus'))">
+		<input type="button" class="button" value= "DEL Video" onClick="cam.deleteFiles ('video', document.getElementById('idIMG'), document.getElementById('idstatus'))">
+
 		<input type="button" class="button" value="Camera" onClick="cam.openCamera (50, 1, 0, document.getElementById('idIMG'), document.getElementById('idstatus'))">
 		<input type="button" class="button" value="PhotoLibrary" onClick="cam.openCamera(50, 0, 2, document.getElementById('idIMG'), document.getElementById('idstatus'))">
 		<input type="button" class="button" value="SavedPhotos" onClick="cam.openCamera(50, 2, 2, document.getElementById('idIMG'), document.getElementById('idstatus'))">

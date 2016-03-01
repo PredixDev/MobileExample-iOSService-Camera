@@ -238,7 +238,33 @@ import PredixMobileSDK
 
     private static func handleDELETERequest(request : NSURLRequest, response : NSHTTPURLResponse, responseReturn : responseReturnBlock, dataReturn : dataReturnBlock, requestComplete: requestCompleteBlock)
     {
-//        TODO:
+        let pmCamera = PMCamera.sharedInstance
+        pmCamera.processDeleteRequest((request.URL?.lastPathComponent)!,
+            errorReturn: { (error : NSData?) -> Void in
+
+                /// the default response object is always pre-set with a 200 (OK) response code, so can be directly used when there are no problems.
+                responseReturn(response)
+
+                /// we return the JSON object containing error details
+                dataReturn(error)
+
+                /// An inform the caller the service call is complete
+                requestComplete()
+            },
+
+            barcodeReturn: { (barcode : NSData?) -> Void in
+
+                /// the default response object is always pre-set with a 200 (OK) response code, so can be directly used when there are no problems.
+                responseReturn(response)
+
+                /// we return the JSON object for barcode
+                dataReturn(barcode)
+
+                /// An inform the caller the service call is complete
+                requestComplete()
+
+            }
+        )
     }
 
 }

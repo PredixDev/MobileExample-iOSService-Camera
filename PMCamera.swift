@@ -145,7 +145,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     }
 
     /**
-     TODO
+     Handels GET request
      - Parameter errorReturnBlock      :   (NSData?) -> Void
      - Parameter barcodeReturnBlock    :   (NSData?) -> Void
      - Returns: :-)
@@ -171,10 +171,19 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
                     let files = try PMCamera.getFileURLs(.Photo_location)
                     self.sendResponse(convert(files), type: .Photo_location)
                 }
-                catch let err as NSError
+                catch PMCameraError.FileHandlingError(let errorMsg)
                 {
-                    self.sendResponse("\(err)", type: .error)
+                    self.sendResponse("\(errorMsg)", type: .error)
                 }
+                catch PMCameraError.MaxCacheError(let errorMsg)
+                {
+                    self.sendResponse("\(errorMsg)", type: .error)
+                }
+                catch let error as NSError
+                {
+                    self.sendResponse("\(error.localizedDescription)", type: .error)
+                }
+
 
             case "video":
                 do
@@ -182,22 +191,95 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
                     let files = try PMCamera.getFileURLs(.Video_location)
                     self.sendResponse(convert(files), type: .Video_location)
                 }
-                catch let err as NSError
+                catch PMCameraError.FileHandlingError(let errorMsg)
                 {
-                    self.sendResponse("\(err)", type: .error)
+                    self.sendResponse("\(errorMsg)", type: .error)
                 }
+                catch PMCameraError.MaxCacheError(let errorMsg)
+                {
+                    self.sendResponse("\(errorMsg)", type: .error)
+                }
+                catch let error as NSError
+                {
+                    self.sendResponse("\(error.localizedDescription)", type: .error)
+                }
+
 
             default:
                 self.sendResponse("Unknown source type option!", type: .error)
         }
     }
 
+    /**
+     Handels GET request
+     - Parameter errorReturnBlock      :   (NSData?) -> Void
+     - Parameter barcodeReturnBlock    :   (NSData?) -> Void
+     - Returns: :-)
+     */
+    func processDeleteRequest(entity : String, errorReturn : errorReturnBlock, barcodeReturn : barcodeReturnBlock)
+    {
+        guard self.state == State.IDLE else
+        {
+            sendBusyResponse(errorReturn)
+            return
+        }
+
+        self.state = State.PROCESSING
+
+        self.mErrorReturn   = errorReturn
+        self.mBarcodeReturn = barcodeReturn
+
+        switch (entity)
+        {
+        case "image":
+            do
+            {
+                try PMCamera.deleteFiles(.Photo_location)
+                self.sendResponse("Files deleted successfully", type: .msg)
+            }catch PMCameraError.FileHandlingError(let errorMsg)
+            {
+                self.sendResponse("\(errorMsg)", type: .error)
+            }
+            catch PMCameraError.MaxCacheError(let errorMsg)
+            {
+                self.sendResponse("\(errorMsg)", type: .error)
+            }
+            catch let error as NSError
+            {
+                self.sendResponse("\(error.localizedDescription)", type: .error)
+            }
+
+
+        case "video":
+            do
+            {
+                try PMCamera.deleteFiles(.Video_location)
+                self.sendResponse("Files deleted successfully", type: .msg)
+            }catch PMCameraError.FileHandlingError(let errorMsg)
+            {
+                self.sendResponse("\(errorMsg)", type: .error)
+            }
+            catch PMCameraError.MaxCacheError(let errorMsg)
+            {
+                self.sendResponse("\(errorMsg)", type: .error)
+            }
+            catch let error as NSError
+            {
+                self.sendResponse("\(error.localizedDescription)", type: .error)
+            }
+
+
+        default: //TODO: functionality to delete a single file
+            self.sendResponse("Unknown source type option in file delete!", type: .error)
+        }
+    }
 
 
     //    MARK: private functions
     /**
-    gets viewcontrolller which is presented on screen
-    - Returns: UIViewController
+    Converts [NSURL] to String
+    - Parameter filesPath: an array containing files path
+    - Returns: String
     */
 
     private func convert(filesPath: [NSURL]) -> String
@@ -213,6 +295,11 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         }
         return toReturn
     }
+
+    /**
+     Top View controller
+     - Returns: UIViewController
+     */
     private func getTopVC() ->UIViewController
     {
         var toReturn:UIViewController?
@@ -257,8 +344,8 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
     /**
      returns a response to calling closure
-     - Parameter msg: todo
-     - Parameter type: todo
+     - Parameter msg: message which will be sent back
+     - Parameter type: type of message
      */
     private func sendResponse(msg: String, type: ResponseType)
     {
@@ -750,7 +837,44 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      - Parameter name      :   file name with extension
      - Returns: ^
      */
-    private func deleteFile(name:String) throws
+    private static func deleteFiles(type: ResponseType) throws
+    {
+        do
+        {
+//            TEST
+//            try PMCamera.deleteFile("someName")
+
+
+            let files:[NSURL] = try PMCamera.getFileURLs(type)
+            if files.count < 1
+            {
+                throw PMCameraError.FileHandlingError("No file cached!")
+            }
+            for path : NSURL in files {
+                let slicedPath:String = path.absoluteString.stringByReplacingOccurrencesOfString("file://", withString: "")
+                if NSFileManager.defaultManager().fileExistsAtPath(slicedPath)
+                {
+                    try NSFileManager.defaultManager().removeItemAtPath(slicedPath)
+                    print("old photo has been removed")
+                }
+            }
+
+        }
+//        catch PMCameraError.FileHandlingError(let errorMsg)
+//        {
+//            throw errorMsg
+//        }
+//        catch PMCameraError.MaxCacheError(let errorMsg)
+//        {
+//            throw errorMsg
+//        }
+        catch let error as NSError
+        {
+            throw error
+        }
+    }
+
+    private static func deleteFile(name:String) throws
     {
         let paths = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)
         if paths.count > 0 {
