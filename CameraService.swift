@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import UIKit
-import MobileCoreServices
+//import UIKit
+//import MobileCoreServices
 /// import the PredixMobile framework, so Swift can find the PredixMobile components we'll need
 import PredixMobileSDK
 
@@ -86,27 +86,58 @@ import PredixMobileSDK
         /**
         Path in this case should match the serviceIdentifier, or "barcodescanner". We know the serviceIdentifier is all
         lower case, so we ensure the path is too before comparing.
-        In addition, we expect the query string to be nil, as no query parameters are expected in this call.
-        In your own services you may want to be more lenient, simply ignoring extra path or parameters.
         */
+//        guard path.lowercaseString == "/\(self.serviceIdentifier)" else
+//        {
+//            self.respondWithErrorStatus(.BadRequest, response, responseReturn, requestComplete)
+//            return
+//        }
 
-        guard path.lowercaseString == "/\(self.serviceIdentifier)" && url.query == nil else
+//        let httpMethod = request.HTTPMethod ?? ""
+
+        switch method
         {
-            /// In this case, if the request URL is anything other than "http://pmapi/barcodescanner" we're returning a 400 status code.
-            self.respondWithErrorStatus(.BadRequest, response, responseReturn, requestComplete)
-            return
+            case "POST":
+                handlePOSTRequest(request, response: response, responseReturn: responseReturn, dataReturn: dataReturn, requestComplete: requestComplete)
+
+            case "DELETE":
+                handleDELETERequest(request, response: response, responseReturn: responseReturn, dataReturn: dataReturn, requestComplete: requestComplete)
+
+            case "GET":
+                handleGETRequest(request, response: response, responseReturn: responseReturn, dataReturn: dataReturn, requestComplete: requestComplete)
+
+            default:
+                PGSDKLogger.error("Camera Service: Invalid HTTPmethod: \(request.HTTPMethod)")
+                let headers = ["Allow" : "POST, DELETE, GET"]
+                self.respondWithErrorStatus(.MethodNotAllowed, response, responseReturn, requestComplete, headers)
+                return
+
         }
 
         /// now that we know our path is what we expect, we'll check the HTTP method. If it's anything other than "POST"
         /// we'll return a standard HTTP status used in that case.
-        guard method == "POST" else
-        {
-            /// According to the HTTP specification, a status code 405 (Method not allowed) must include an Allow header containing a list of valid methods.
-            /// this  demonstrates one way to accomplish this.
-            let headers = ["Allow" : "POST"]
+//        guard method == "POST" else
+//        {
+//            /// According to the HTTP specification, a status code 405 (Method not allowed) must include an Allow header containing a list of valid methods.
+//            /// this  demonstrates one way to accomplish this.
+//            let headers = ["Allow" : "POST"]
+//
+//            /// This respondWithErrorStatus overload allows additional headers to be passed that will be added to the response.
+//            self.respondWithErrorStatus(HTTPStatusCode.MethodNotAllowed, response, responseReturn, requestComplete, headers)
+//            return
+//        }
 
-            /// This respondWithErrorStatus overload allows additional headers to be passed that will be added to the response.
-            self.respondWithErrorStatus(HTTPStatusCode.MethodNotAllowed, response, responseReturn, requestComplete, headers)
+
+
+    }
+
+    private static func handlePOSTRequest(request : NSURLRequest, response : NSHTTPURLResponse, responseReturn : responseReturnBlock, dataReturn : dataReturnBlock, requestComplete: requestCompleteBlock)
+    {
+
+        guard let url = request.URL where url.query == nil else
+        {
+            /// In this case, if the request URL is anything other than "http://pmapi/barcodescanner" we're returning a 400 status code.
+            self.respondWithErrorStatus(.BadRequest, response, responseReturn, requestComplete)
             return
         }
 
@@ -131,7 +162,7 @@ import PredixMobileSDK
             /// Now we know that our path and method were correct, and we've handled error conditions, let's try opening camera
 
             let pmCamera = PMCamera.sharedInstance
-            pmCamera.processRequest( bodyDictionary,
+            pmCamera.processPOSTRequest( bodyDictionary,
 
                 errorReturn: { (error : NSData?) -> Void in
 
@@ -165,567 +196,49 @@ import PredixMobileSDK
             self.respondWithErrorStatus(HTTPStatusCode.BadRequest, response, responseReturn, requestComplete)
             return
         }
-
     }
 
-
-}
-
-//MARK: PMCamera
-/**
-Responsible for camera access and scanning barcode
-*/
-class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIPopoverControllerDelegate
-{
-    ///  a shared instance
-    static let sharedInstance       = PMCamera()
-
-    typealias barcodeReturnBlock    = (NSData?) -> Void
-    typealias errorReturnBlock      = (NSData?) -> Void
-
-    private var mErrorReturn:errorReturnBlock?
-    private var mBarcodeReturn:barcodeReturnBlock?
-
-    var picker:UIImagePickerController?=UIImagePickerController()
-    weak var imageView: UIImageView!
-    var popover:UIPopoverController?=nil
-
-    private var responseData :[String : AnyObject]?
-    private var topViewController: UIViewController?
-    private var mOptions :[String : AnyObject]?
-
-    private enum ResponseType : Int {
-
-        case Photo_src
-        case Photo_location
-
-        case Video_src
-        case Video_location
-
-        case msg
-        case error
-    }
-
-    private enum LocationType : Int {
-
-        case Data
-        case Location
-        case Native
-    }
-
-    private enum State : Int {
-
-        case IDLE
-        case PROCESSING
-    }
-
-    private var state:State? = State.IDLE
-
-    let FILE_NAME_SUFFIX    = "PM_CAMERA_"
-    let imageDirName        = "images"
-    let movDirName          = "mov"
-    let maxImgFiles         = 5
-    let maxVideoFiles       = 5
-    var imageDirPath:String?
-    var videoDirPath:String?
-
-    override init() {
-
-        imageDirPath = PMCamera.createDir(imageDirName)
-        videoDirPath = PMCamera.createDir(movDirName)
-    }
-
-    /**
-        TODO
-    - Parameter errorReturnBlock      :   (NSData?) -> Void
-    - Parameter barcodeReturnBlock    :   (NSData?) -> Void
-    - Returns: :-)
-    */
-    func processRequest(options : Dictionary<String, AnyObject>, errorReturn : errorReturnBlock, barcodeReturn : barcodeReturnBlock)
+    private static func handleGETRequest(request : NSURLRequest, response : NSHTTPURLResponse, responseReturn : responseReturnBlock, dataReturn : dataReturnBlock, requestComplete: requestCompleteBlock)
     {
-        guard self.state == State.IDLE else
-        {
-            sendBusyResponse(errorReturn)
-            return
-        }
-
-        self.state = State.PROCESSING
-
-        self.mErrorReturn   = errorReturn
-        self.mBarcodeReturn = barcodeReturn
-        self.mOptions       = options
-        picker?.delegate    = self
-
-        picker!.allowsEditing = self.getEditingAllowed()
-
-        switch(self.getSourceType()) {
-
-        case UIImagePickerControllerSourceType.Camera:
-            self.picker!.sourceType = UIImagePickerControllerSourceType.Camera
-
-            let mediaType = self.getMediaType()
-            if(1 == mediaType) //its video
-            {
-                picker!.mediaTypes = [/*kUTTypeImage as String,*/ kUTTypeMovie as String, kUTTypeVideo as String]
-            }
-            openCamera()
-
-        case UIImagePickerControllerSourceType.PhotoLibrary:
-            self.picker!.sourceType = UIImagePickerControllerSourceType.PhotoLibrary
-            picker!.mediaTypes = [kUTTypeImage as String, kUTTypeMovie as String, kUTTypeVideo as String]
-            openGallary()
-
-        case UIImagePickerControllerSourceType.SavedPhotosAlbum:
-            self.picker!.sourceType = UIImagePickerControllerSourceType.SavedPhotosAlbum
-            picker!.mediaTypes = [kUTTypeImage as String, kUTTypeMovie as String, kUTTypeVideo as String]
-            openGallary()
-
-//        default:
-//            self.sendResponse("Unknown source type option!", type: .error)
-
-        }
-
-    }
-
-    //    MARK: private functions
-    /**
-    gets viewcontrolller which is presented on screen
-    - Returns: UIViewController
-    */
-    internal func getTopVC() ->UIViewController
-    {
-        var toReturn:UIViewController?
-        if let topController = UIApplication.sharedApplication().keyWindow?.rootViewController {
-            if(topController.presentedViewController == nil)
-            {
-                toReturn = topController
-            }
-
-            else
-            {
-                while let presentedViewController = topController.presentedViewController {
-                    toReturn = presentedViewController
-                    break
-                }
-            }
-        }
-        return toReturn!
-    }
-
-
-    /**
-     Busy error response
-     - Parameter errorReturn: errorReturnBlock
-    */
-    private func sendBusyResponse(errorReturn : errorReturnBlock)
-    {
-        var busyRespData :[String : AnyObject]? = [String : AnyObject]()
-        busyRespData!["error".lowercaseString] = "Already processing a request, Please try again."
-        do
-        {
-            let toReturn = try NSJSONSerialization.dataWithJSONObject(busyRespData!, options: NSJSONWritingOptions(rawValue: 0))
-            errorReturn(toReturn)
-
-        }
-        catch let error
-        {
-            PGSDKLogger.error("Error serializing busy response data into JSON: \(error)")
-        }
-
-    }
-
-    /**
-         returns a response to calling closure
-        - Parameter msg: todo
-        - Parameter type: todo
-     */
-    private func sendResponse(msg: String, type: ResponseType)
-    {
-        self.responseData = [String : AnyObject]()
-
-        self.state = State.IDLE
-
-        switch(type)
-        {
-            case .Photo_src:
-                self.responseData!["image_src".lowercaseString] = msg
-
-            case .Photo_location:
-                self.responseData!["image_location".lowercaseString] = msg
-
-            case .Video_src:
-                self.responseData!["video_src".lowercaseString] = msg
-
-            case .Video_location:
-                self.responseData!["video_location".lowercaseString] = msg
-
-            case .msg:
-                self.responseData!["message".lowercaseString] = msg
-
-            case .error:
-                self.responseData!["error".lowercaseString] = msg
-        }
-
-
-        do
-        {
-            let toReturn = try NSJSONSerialization.dataWithJSONObject(self.responseData!, options: NSJSONWritingOptions(rawValue: 0))
-
-            switch(type)
-            {
-                case .error:
-                    self.mErrorReturn!(toReturn)
-
-                case .Photo_src, .Photo_location, .Video_src, .Video_location, .msg:
-                    self.mBarcodeReturn!(toReturn)
-            }
-
-        }
-        catch let error
-        {
-            PGSDKLogger.error("Error serializing user data into JSON: \(error)")
-        }
-
-    }
-
-//  MARK: Options parser
-    /**
-        Compression option
-    - Returns : CGFloat
-    */
-    private func getCompression() ->CGFloat
-    {
-        var toReturn:CGFloat
-        toReturn = 0.0
-        if let compression = self.mOptions!["compression"] as? CGFloat
-        {
-            toReturn = compression/100
-
-        }
-        return toReturn
-    }
-
-    /**
-         Source type option
-     */
-    private func getSourceType() ->UIImagePickerControllerSourceType
-    {
-        var toReturn:UIImagePickerControllerSourceType
-        toReturn = UIImagePickerControllerSourceType.PhotoLibrary
-        if let srcType = self.mOptions!["sourceType"] as? Int
-        {
-            toReturn = UIImagePickerControllerSourceType(rawValue: srcType)!
-
-        }
-        return toReturn
-    }
-
-    /**
-     Media option
-     */
-    private func getMediaType() ->Int
-    {
-        var toReturn:Int
-        toReturn = 0
-        if let srcType = self.mOptions!["mediaType"] as? Int
-        {
-            toReturn = srcType
-
-        }
-        return toReturn
-    }
-
-    /**
-         Output option
-     */
-    private func getOutputType() ->ResponseType
-    {
-        var toReturn:ResponseType
-        toReturn = .error
-        if let outputType = self.mOptions!["output"] as? Int
-        {
-//            toReturn = outputType ==
-            switch(outputType) {
-
-            case 0: //File URI
-                toReturn = (0 == self.getMediaType()) ? .Photo_location : .Video_location
-
-            case 1: // SRC
-                toReturn = (0 == self.getMediaType()) ? .Photo_src : .error
-
-            default:
-                toReturn = .error
-            }
-
-        }
-        return toReturn
-    }
-
-    /**
-         Editing option
-
-        - Returns: Bool
-     */
-    private func getEditingAllowed() ->Bool
-    {
-        var toReturn:Bool
-        toReturn = false
-        if let edit = self.mOptions!["edit"] as? Int
-        {
-            toReturn = (edit == 0) ? false : true
-
-        }
-        return toReturn
-    }
-
-//  TODO:
-    private func getCameraDirection() ->Int
-    {
-        var toReturn:Int
-        toReturn = 0
-        if let cameraDirection = self.mOptions!["cameraDirection"] as? Int
-        {
-            toReturn = cameraDirection
-
-        }
-        return toReturn
-    }
-
-
-
-
-
-    func openCamera()
-    {
-        if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerControllerSourceType.Camera))
-        {
-            self.topViewController = getTopVC()
-            dispatch_async(dispatch_get_main_queue()) {
-                self.topViewController!.presentViewController(self.picker!, animated: true, completion: nil)
-            }
-
-        }
-        else
-        {
-            PGSDKLogger.error("Camera not accessible!")
-            self.sendResponse("Camera not accessible", type: .error)
-        }
-    }
-    func openGallary()
-    {
-        if UIDevice.currentDevice().userInterfaceIdiom == .Phone
-        {
-            self.topViewController = getTopVC()
-            dispatch_async(dispatch_get_main_queue()) {
-                self.topViewController!.presentViewController(self.picker!, animated: true, completion: nil)
-            }
-        }
-        else
-        {
-            self.topViewController = getTopVC()
-            dispatch_async(dispatch_get_main_queue()) {
-                self.popover=UIPopoverController(contentViewController: self.picker!)
-                self.popover!.presentPopoverFromRect(CGRectMake(50.0, 50.0, 400, 400), inView: self.topViewController!.view, permittedArrowDirections: UIPopoverArrowDirection.Any, animated: true)
-            }
-
-        }
-    }
-
-
-
-//  MARK: image picker delegate
-
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject])
-    {
-        picker .dismissViewControllerAnimated(true, completion: nil)
-
-        var outputData:NSData?
-        let mediaType = info[UIImagePickerControllerMediaType] as! NSString
-        // Handle a movie capture
-        if mediaType == kUTTypeMovie ||  mediaType == kUTTypeVideo
-        {
-            let path = (info[UIImagePickerControllerMediaURL] as! NSURL)
-            outputData = NSData(contentsOfURL: path)!
-
-        }
-        else
-        {
-            let returnImg = info[UIImagePickerControllerOriginalImage] as? UIImage
-            outputData = UIImageJPEGRepresentation(returnImg!, self.getCompression())
-        }
-        generateOutput(outputData!)
-    }
-
-
-
-    func imagePickerControllerDidCancel(picker: UIImagePickerController)
-    {
-        self.picker!.dismissViewControllerAnimated(true, completion: nil)
-        self.sendResponse("User cancelled", type: .error)
-        self.generateUniqueFilename(.error)
-    }
-
-
-    private func generateOutput(data: NSData)
-    {
-        switch(getOutputType())
-        {
-            case .Photo_src:
-                print("send base64")
-                let base64String = data.base64EncodedStringWithOptions(.Encoding64CharacterLineLength)
-                self.sendResponse(base64String, type: .Photo_src)
-
-            case .Photo_location:
-                saveNSendResponse(data, type: .Photo_location)
-
-            case .Video_location:
-                saveNSendResponse(data, type: .Video_location)
-
-            case .error, .msg, .Video_src:
-                self.sendResponse("Unknown output format! 1", type: .error)
-
-        }
-    }
-
-
-
-
-//   MARK: File handling
-
-    /// Saves data in relevant format based on provided options and returns a response
-    ///
-    /// - Parameters:
-    ///     - dataToBeWritten: image or video data which needs to be persisted
-    ///     - type: type of response
-    private func saveNSendResponse(dataToBeWritten: NSData, type: ResponseType)
-    {
-        let savePath = generateUniqueFilename(type)
-
-
-
-
-        let isSaved = dataToBeWritten.writeToFile(savePath, atomically: true)
-        if isSaved
-        {
-            switch(type)
-            {
-
-            case .Photo_location:
-                self.sendResponse(savePath, type: .Photo_location)
-
-            case .Video_location:
-                self.sendResponse(savePath, type: .Video_location)
-
-            case .Photo_src, .Video_src, .msg, .error:
-                self.sendResponse("Unknown output format! 2", type: .error)
-            }
-
-        }
-        else
-        {
-            self.sendResponse("Error in saving file!", type: .error)
-        }
-    }
-
-    private func generateUniqueFilename(type: ResponseType) -> String {
-
-        var extensionName:String?
-        var documentPath:String?
-        switch(type)
-        {
-
-            case .Photo_location:
-                extensionName = "jpeg"
-                documentPath = imageDirPath
-
-            case .Video_location:
-                extensionName = "mov"
-            documentPath = videoDirPath
-
-            case .Photo_src, .Video_src, .msg, .error:
-                extensionName = "ERROR_FORMAT"
-                documentPath = "ERROR_FORMAT"
-        }
-
-        let guid = NSProcessInfo.processInfo().globallyUniqueString
-        let uniqueFileName = documentPath! + "/" + ("\(FILE_NAME_SUFFIX)\(guid).\(extensionName!)")
-
-        print("uniqueFileName: \(uniqueFileName)")
-//        self.listFiles(imageDirName)
-        return uniqueFileName
-    }
-
-    private func listFiles(dirName: String)
-    {
-        // We need just to get the documents folder url
-
-        let documentsUrl =  NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).first!
-        var dataPath:NSURL
-        if #available(iOS 9.0, *) {
-            dataPath = NSURL(fileURLWithPath: dirName, isDirectory: true, relativeToURL: documentsUrl)
-        } else {
-            dataPath = documentsUrl.URLByAppendingPathComponent(dirName, isDirectory: true)//NSURL(fileURLWithPath: dirName, isDirectory: true)
-        }
-
-        print("documentsUrl: \(documentsUrl)")
-
-        do {
-            let directoryContents = try NSFileManager.defaultManager().contentsOfDirectoryAtURL(dataPath, includingPropertiesForKeys: nil, options: NSDirectoryEnumerationOptions())
-            print("directoryContents: \(directoryContents)")
-
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-
-    }
-
-    private func deleteFile(name:String)
-    {
-        let paths = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)
-        if paths.count > 0 {
-            let dirPath = paths[0]
-            let fileName = "someFileName"
-            let filePath = NSString(format:"%@/%@.png", dirPath, fileName) as String
-            if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
-                do {
-                    try NSFileManager.defaultManager().removeItemAtPath(filePath)
-                    print("old image has been removed")
-                } catch {
-                    print("an error during a removing")
-                }
-            }
-        }
-
-    }
-
-
-    private static func createDir(dirName: String) -> String
-    {
-        let paths = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)
-        let documentsDirectory: AnyObject = paths[0]
-        let dataPath = documentsDirectory.stringByAppendingPathComponent(dirName)
-
-        var isDir : ObjCBool = false
-
-        if NSFileManager.defaultManager().fileExistsAtPath(dataPath, isDirectory: &isDir) {
-            if isDir {
-                // file exists & its a dir :-)
-            } else {
-                // file exists & isn't dir??? whoa- TODO:? :-(
+//        guard let url = request.URL where url.query != nil else
+//        {
+//            /// In this case, if the request URL is anything other than "http://pmapi/barcodescanner" we're returning a 400 status code.
+//            self.respondWithErrorStatus(.BadRequest, response, responseReturn, requestComplete)
+//            return
+//        }
+//        TODO:
+        let pmCamera = PMCamera.sharedInstance
+        pmCamera.processGETRequest((request.URL?.lastPathComponent)!,
+            errorReturn: { (error : NSData?) -> Void in
+
+                /// the default response object is always pre-set with a 200 (OK) response code, so can be directly used when there are no problems.
+                responseReturn(response)
+
+                /// we return the JSON object containing error details
+                dataReturn(error)
+
+                /// An inform the caller the service call is complete
+                requestComplete()
+            },
+
+            barcodeReturn: { (barcode : NSData?) -> Void in
+
+                /// the default response object is always pre-set with a 200 (OK) response code, so can be directly used when there are no problems.
+                responseReturn(response)
+
+                /// we return the JSON object for barcode
+                dataReturn(barcode)
+
+                /// An inform the caller the service call is complete
+                requestComplete()
 
             }
-        }
-        else {
-            // file doesn't exist :-<
-            do {
-                try NSFileManager.defaultManager().createDirectoryAtPath(dataPath, withIntermediateDirectories: false, attributes: nil)
-            } catch let error as NSError {
-                print(error.localizedDescription);
-            }
-        }
+        )
+    }
 
-        return dataPath
-
+    private static func handleDELETERequest(request : NSURLRequest, response : NSHTTPURLResponse, responseReturn : responseReturnBlock, dataReturn : dataReturnBlock, requestComplete: requestCompleteBlock)
+    {
+//        TODO:
     }
 
 }

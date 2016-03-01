@@ -23,12 +23,12 @@
 		background-color: cyan;
 		border: none;
 		color: white;
-		padding: 15px 32px;
+		padding: 5px 5px;
 		text-align: center;
 		text-decoration: none;
 		display: inline-block;
 		font-size: 18px;
-		margin: 40px 80px;
+		margin: 10px 10px;
 	}
 	</style>
 	<script src="Camera.js"></script>
@@ -36,14 +36,19 @@
 </head>
 
 <body>
-	<input type="button" class="button" value="Camera" onClick="cam.openCamera (50, 1, 0, document.getElementById('idIMG'), document.getElementById('idstatus'))">
-	<input type="button" class="button" value="PhotoLibrary" onClick="cam.openCamera(50, 0, 2, document.getElementById('idIMG'), document.getElementById('idstatus'))">
-	<input type="button" class="button" value="SavedPhotos" onClick="cam.openCamera(50, 2, 2, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+	<div id="buttons" style="margin: 10px 10px;">
+		<input type="button" class="button" value="ImagesList" onClick="cam.getFilesList ('image', document.getElementById('idIMG'), document.getElementById('idstatus'))">
+		<input type="button" class="button" value= "VideoList" onClick="cam.getFilesList ('video', document.getElementById('idIMG'), document.getElementById('idstatus'))">
 
-	<input type="button" class="button" value="Record" onClick="cam.openCamera(50, 1, 1, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+		<input type="button" class="button" value="Camera" onClick="cam.openCamera (50, 1, 0, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+		<input type="button" class="button" value="PhotoLibrary" onClick="cam.openCamera(50, 0, 2, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+		<input type="button" class="button" value="SavedPhotos" onClick="cam.openCamera(50, 2, 2, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+		<input type="button" class="button" value="Video" onClick="cam.openCamera(50, 1, 1, document.getElementById('idIMG'), document.getElementById('idstatus'))">
+	</div>
+
 	<div  class="scroll" >
 		<div id="idstatus"> Press 'Scan Barcode'. </div>
-		<img id="idIMG" src="ge-predix-logo.png" alt="Predix-Mobile" style="width:181px;height:278px;">
+		<img id="idIMG" src="ge-predix-logo.png" alt="Predix-Mobile" style="width:200px;">
 	</div>
 
 

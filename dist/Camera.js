@@ -3,6 +3,27 @@ var Camera = function()
 {
   var imgView = null;
   var statusView = null;
+
+  this.getFilesList = function(type, idimgView,idstatus)
+  {
+    if (null == statusView) {
+      statusView = idstatus;
+    }
+    if (null == imgView) {
+      imgView = idimgView;
+    }
+
+    var cameraURL = 'http://pmapi/camera/'+type;
+    console.log('camera get URL: '+ cameraURL);
+
+    _sendGETRequest(cameraURL, function(respData) {
+      statusView.innerHTML = JSON.stringify(respData);
+   }, function(err) {
+     statusView.innerHTML = JSON.stringify(err);
+   });
+
+
+  }
   this.openCamera = function(compression, sourceType, mediaType, idimgView, idstatus)
   {
     if (null == imgView) {
@@ -49,9 +70,15 @@ var Camera = function()
           imgView.src = "data:image/jpeg;base64," + data.image_src;
           statusView.innerHTML = "";
       }
+      else if(data.hasOwnProperty('image_location')){
+        statusView.innerHTML = "";
+        imgView.src = data.image_location;
+      }
       else {
-        statusView.innerHTML = responseRcvd;
-        imgView.src = "";
+        {
+          statusView.innerHTML = responseRcvd;
+          imgView.src = "";
+        }
       }
 
     }, function(err) {
@@ -94,6 +121,22 @@ var Camera = function()
       console.error('Something went wrong:', err);
     });
   };
+
+  // sends a GET HTTP request
+    var _sendGETRequest = function(url, successHandler, errorHandler) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('get', url, true);
+      xhr.responseType = 'json';
+      xhr.onload = function() {
+        var status = xhr.status;
+        if (status >= 200 && status <= 299) {
+          successHandler && successHandler(xhr.response);
+        } else {
+          errorHandler && errorHandler(status);
+        }
+      };
+      xhr.send();
+    };
 
   // sends a POST HTTP request
 var _sendPOSTRequest = function(url, body, successHandler, errorHandler) {
