@@ -47,7 +47,7 @@ A simple demo webapp is provided in the dist directory in the git repo.
     Compression of served image, ranges from `0-100`  
 
 *MediaType* :
-|               |               |                                    |  
+|␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣|␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣|␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣|  
 | ------------- |:-------------:| :---------------------------------:|  
 | PICTURE       | 0             | Allows selection of pictures only. |  
 | VIDEO         | 1             |   Allows selection of videos only. |  
@@ -60,7 +60,7 @@ A simple demo webapp is provided in the dist directory in the git repo.
 | CAMERA        | 1             | Take from camera.                  |  
 | SAVEDALBUM    | 2             | Choose from picture library.       |  
 
-  
+
 *OUTPUT* :  
 |               |               |                                    |
 | ------------- |:-------------:| :---------------------------------:|
