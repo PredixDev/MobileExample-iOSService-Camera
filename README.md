@@ -39,28 +39,54 @@ In brief - they take you through creating an implemenation of the ServiceProtoco
 
 ## Step 5 - Call the service from a webapp
 
-Your new iOS client service is exposed through the service identifier "camera". So calling http://pmapi/camera from a webapp will call this service.
+Your new iOS client service is exposed through the service identifier `camera`. So calling http://pmapi/camera from a webapp will call this service.
 A simple demo webapp is provided in the dist directory in the git repo.
----
-Camera service options:
-- Compression :  
+
+**Camera service options for POST request**:
+*Compression* :  
     Compression of served image, ranges from `0-100`  
 
-- MediaType :  
-    PICTURE	    0 (DEFAULT)	Allows selection of pictures only.  
-    VIDEO		    1	          Allows selection of videos only.  
+*MediaType* :
+|               |               |                                    |
+| ------------- |:-------------:| :---------------------------------:|
+| PICTURE       | 0             | Allows selection of pictures only. |
+| VIDEO         | 1             |   Allows selection of videos only. |
 
-- SourceType :  
-    LIBRARY	   0	          Choose from library  
-    CAMERA		   1	          Take from camera  
-    SAVEDALBUM	 2	          Choose from picture library  
 
-- OUTPUT :  
-    FILE-URI 	   0	          File uri string  
-    SRC-DATA	     1	          Base64 encoded string  
+*SourceType* :  
+|               |               |                                    |
+| ------------- |:-------------:| :---------------------------------:|
+| LIBRARY       | 0             | Choose from library.               |
+| CAMERA        | 1             | Take from camera.                  |
+| SAVEDALBUM    | 2             | Choose from picture library.       |
 
-- Edit :  
-    HIDE-CTRL  0             Hide editing control  
-    SHOW-CTRL  1             Show editing control  
 
-- CameraDirection : <TODO>  
+*OUTPUT* :  
+|               |               |                                    |
+| ------------- |:-------------:| :---------------------------------:|
+| FILE-URI      | 0             | File uri string.                   |
+| SRC-DATA      | 1             | Base64 encoded string.             |
+
+
+*Edit* :  
+|               |               |                                    |
+| ------------- |:-------------:| :---------------------------------:|
+| HIDE-CTRL     | 0             | Hide editing control.              |
+| SHOW-CTRL     | 1             | Show editing control.              |
+
+
+*CameraDirection* : <TODO>  
+
+
+**Camera service options for GET request**:
+|               |               |                                    |
+| ------------- |:-------------:| :---------------------------------:|
+| PICTURE       | image         | An array of URL's of all images.   |
+| VIDEO         | video         | An array of URL's of all videos.   |
+
+
+**Camera service options for DELETE request**:
+|               |               |                                    |
+| ------------- |:-------------:| :---------------------------------:|
+| PICTURE       | image         | Delete all images.                 |
+| VIDEO         | video         | Delete all videos.                 |
