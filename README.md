@@ -48,14 +48,16 @@ A simple demo webapp is provided in the dist directory in the git repo.
     Compression of served image, ranges from `0-100`  
 
 *MediaType* :  
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
+
+| parameter     | value         | description                        |  
 | ------------- |:-------------:| :---------------------------------:|  
 | PICTURE       | 0             | Allows selection of pictures only. |  
 | VIDEO         | 1             |   Allows selection of videos only. |  
 
 
 *SourceType* :  
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
+
+| parameter     | value         | description                        |  
 | ------------- |:-------------:| :---------------------------------:|  
 | LIBRARY       | 0             | Choose from library.               |  
 | CAMERA        | 1             | Take from camera.                  |  
@@ -63,7 +65,8 @@ A simple demo webapp is provided in the dist directory in the git repo.
 
 
 *OUTPUT* :  
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
+
+| parameter     | value         | description                        |  
 | ------------- |:-------------:| :---------------------------------:|
 | FILE-URI      | 0             | File uri string.                   |
 | SRC-DATA      | 1             | Base64 encoded string.             |
