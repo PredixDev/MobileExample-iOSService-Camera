@@ -70,7 +70,8 @@ A simple demo webapp is provided in the dist directory in the git repo.
 
 
 *Edit* :  
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
+
+| parameter     | value         | description                        |  
 | ------------- |:-------------:| :---------------------------------:|
 | HIDE-CTRL     | 0             | Hide editing control.              |
 | SHOW-CTRL     | 1             | Show editing control.              |
@@ -81,7 +82,7 @@ A simple demo webapp is provided in the dist directory in the git repo.
 
 **Camera service options for GET request**: A GET request can be sent to `http://pmapi/camera/image` or `http://pmapi/camera/video` to get array of file URL's  
 
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
+| parameter     | value         | description                        |  
 | ------------- |:-------------:| :---------------------------------:|
 | PICTURE       | image         | An array of URL's of all images.   |
 | VIDEO         | video         | An array of URL's of all videos.   |
