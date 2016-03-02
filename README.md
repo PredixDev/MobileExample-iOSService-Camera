@@ -47,14 +47,14 @@ A simple demo webapp is provided in the dist directory in the git repo.
     Compression of served image, ranges from `0-100`  
 
 *MediaType* :  
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|  
 | PICTURE       | 0             | Allows selection of pictures only. |  
 | VIDEO         | 1             |   Allows selection of videos only. |  
 
 
 *SourceType* :  
-|               |               |                                    |  
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|  
 | LIBRARY       | 0             | Choose from library.               |  
 | CAMERA        | 1             | Take from camera.                  |  
@@ -62,14 +62,14 @@ A simple demo webapp is provided in the dist directory in the git repo.
 
 
 *OUTPUT* :  
-|               |               |                                    |
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|
 | FILE-URI      | 0             | File uri string.                   |
 | SRC-DATA      | 1             | Base64 encoded string.             |
 
 
 *Edit* :  
-|               |               |                                    |
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|
 | HIDE-CTRL     | 0             | Hide editing control.              |
 | SHOW-CTRL     | 1             | Show editing control.              |
@@ -79,14 +79,14 @@ A simple demo webapp is provided in the dist directory in the git repo.
 
 
 **Camera service options for GET request**:
-|               |               |                                    |
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|
 | PICTURE       | image         | An array of URL's of all images.   |
 | VIDEO         | video         | An array of URL's of all videos.   |
 
 
 **Camera service options for DELETE request**:
-|               |               |                                    |
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|
 | PICTURE       | image         | Delete all images.                 |
 | VIDEO         | video         | Delete all videos.                 |
