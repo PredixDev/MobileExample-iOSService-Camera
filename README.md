@@ -1,5 +1,5 @@
 # MobileExample-iOSService-Camera
-This repo demonstrates a barcode scanning iOS native service and a webapp utilizing that service.
+This repo demonstrates a camera iOS native service and a webapp utilizing that service.
 
 ## Step 0 - Prerequisites
 It is assumed you already have a Predix Mobile cloud services installation, have installed the Predix Mobile command line tool, and have installed a Predix Mobile iOS Container, following the Getting Started examples for those repos.
@@ -40,7 +40,7 @@ In brief - they take you through creating an implemenation of the ServiceProtoco
 ## Step 5 - Call the service from a webapp
 
 Your new iOS client service is exposed through the service identifier "camera". So calling http://pmapi/camera from a webapp will call this service.
-A simple demo webapp is provided in the demo-webapp directory in the git repo.
+A simple demo webapp is provided in the dist directory in the git repo.
 ---
 Camera service options:
 - Compression :  
