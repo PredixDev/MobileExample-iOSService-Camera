@@ -89,7 +89,7 @@ A simple demo webapp is provided in the dist directory in the git repo.
 
 **Camera service options for DELETE request**: A DELETE request can be sent to `http://pmapi/camera/image` or `http://pmapi/camera/video` to delete pictures or video files.  
 
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
+| parameter     | value         | description                        |  
 | ------------- |:-------------:| :---------------------------------:|
 | PICTURE       | image         | Delete all images.                 |
 | VIDEO         | video         | Delete all videos.                 |
