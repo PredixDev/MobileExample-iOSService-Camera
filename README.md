@@ -42,7 +42,8 @@ In brief - they take you through creating an implemenation of the ServiceProtoco
 Your new iOS client service is exposed through the service identifier `camera`. So calling http://pmapi/camera from a webapp will call this service.
 A simple demo webapp is provided in the dist directory in the git repo.
 
-**Camera service options for POST request**:
+**Camera service options for POST request**:  A POST request to `http://pmapi/camera` can be sent with following options  
+
 *Compression* :  
     Compression of served image, ranges from `0-100`  
 
@@ -78,14 +79,16 @@ A simple demo webapp is provided in the dist directory in the git repo.
 *CameraDirection* : <TODO>  
 
 
-**Camera service options for GET request**:
+**Camera service options for GET request**: A GET request can be sent to `http://pmapi/camera/image` or `http://pmapi/camera/video` to get array of file URL's  
+
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|
 | PICTURE       | image         | An array of URL's of all images.   |
 | VIDEO         | video         | An array of URL's of all videos.   |
 
 
-**Camera service options for DELETE request**:
+**Camera service options for DELETE request**: A DELETE request can be sent to `http://pmapi/camera/image` or `http://pmapi/camera/video` to delete pictures or video files.  
+
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|
 | PICTURE       | image         | Delete all images.                 |
