@@ -46,8 +46,8 @@ A simple demo webapp is provided in the dist directory in the git repo.
 *Compression* :  
     Compression of served image, ranges from `0-100`  
 
-*MediaType* :
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣|␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣␣|  
+*MediaType* :  
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|  
 | ------------- |:-------------:| :---------------------------------:|  
 | PICTURE       | 0             | Allows selection of pictures only. |  
 | VIDEO         | 1             |   Allows selection of videos only. |  
