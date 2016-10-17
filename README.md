@@ -2,14 +2,14 @@
 This repo demonstrates a camera iOS native service and a web app utilizing that service.
 
 ## Prerequisites
-It is assumed you already have a Predix Mobile service installation, have installed the Predix Mobile pm command line tool, and have installed a Predix Mobile iOS Container, following the Getting Started examples for those repos.
+It is assumed you already have a Predix Mobile service installation, have installed the Predix Mobile pm command line tool, and have installed a Predix Mobile iOS Container.
 
 It is also assumed you have a basic knowledge of mobile iOS development using XCode and Swift.
 
 To get started, follow this documentation:
 * [Get Started with the Mobile Service and Mobile SDK] (https://www.predix.io/docs#rae4EfJ6) 
 * [Running the Predix Mobile Sample App] (https://www.predix.io/docs#EGUzWwcC)
-* [Creating a Mobile Hello World Webapp] (https://www.predix.io/docs#DrBWuHkl) 
+* [Creating a Mobile Hello World Web App] (https://www.predix.io/docs#DrBWuHkl) 
 
 
 ## Step 1 - Integrate the example code
