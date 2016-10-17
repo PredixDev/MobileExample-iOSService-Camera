@@ -6,6 +6,12 @@ It is assumed you already have a Predix Mobile service installation, have instal
 
 It is also assumed you have a basic knowledge of mobile iOS development using XCode and Swift.
 
+To get started, follow this documentation:
+* [Get Started with the Mobile Service and Mobile SDK] (https://www.predix.io/docs#rae4EfJ6) 
+* [Running the Predix Mobile Sample App] (https://www.predix.io/docs#EGUzWwcC)
+* [Creating a Mobile Hello World Webapp] (https://www.predix.io/docs#DrBWuHkl) 
+
+
 ## Step 1 - Integrate the example code
 
 1. Add the `CameraService.swift` and `PMCamera.swift` files from this repo to your container project:
