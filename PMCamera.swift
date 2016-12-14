@@ -13,103 +13,90 @@ import PredixMobileSDK
 
 //MARK: PMCamera
 /**
-Responsible for camera access and scanning barcode
+Responsible for camera access
 */
-class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIPopoverControllerDelegate
+class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate
 {
     ///  a shared instance
     static let sharedInstance       = PMCamera()
 
-    typealias barcodeReturnBlock    = (NSData?) -> Void
-    typealias errorReturnBlock      = (NSData?) -> Void
+    typealias successReturnBlock    = (Data?) -> Void
+    typealias errorReturnBlock      = (Data?) -> Void
 
-    private var mErrorReturn:errorReturnBlock?
-    private var mBarcodeReturn:barcodeReturnBlock?
+    fileprivate var mErrorReturn:errorReturnBlock?
+    fileprivate var mSuccessReturn:successReturnBlock?
 
     var picker:UIImagePickerController?
     weak var imageView: UIImageView!
-    var popover:UIPopoverController?=nil
 
-    private var responseData :[String : AnyObject]?
-    private var topViewController: UIViewController?
-    private var mOptions :[String : AnyObject]?
-
-
-
-    private var state:State? = State.IDLE
+    fileprivate var responseData :[String : AnyObject]?
+    fileprivate var topViewController: UIViewController?
+    fileprivate var mOptions :[String : Any]?
+    fileprivate var state:State? = State.idle
 
 
 
-    private var photoDirPath:String?
-    private var videoDirPath:String?
+    fileprivate var photoDirPath:String?
+    fileprivate var videoDirPath:String?
 
-    private enum ResponseType : Int {
+    fileprivate enum ResponseType : Int {
 
-        case Photo_src
-        case Photo_location
+        case photo_src
+        case photo_location
 
-        case Video_src
-        case Video_location
+        case video_src
+        case video_location
 
         case msg
         case error
     }
 
-    private enum LocationType : Int {
+    fileprivate enum LocationType : Int {
 
-        case Data
-        case Location
-        case Native
+        case data
+        case location
+        case native
     }
 
-    private enum State : Int {
+    fileprivate enum State : Int {
 
-        case IDLE
-        case PROCESSING
+        case idle
+        case processing
     }
-
-//    private enum xxx : Int
-//    {
-//        case Photo
-//        case Video
-//    }
 
     override init() {
         self.picker=UIImagePickerController()
 
         do
         {
-            //            try PMCamera.listFiles(PMCamera.imageDirName)
-            try photoDirPath = PMCamera.createDir(PMCamera.photoDirName)
-            try videoDirPath = PMCamera.createDir(PMCamera.videoDirName)
+            try self.photoDirPath = PMCamera.createDir(PMCamera.photoDirName)
+            try self.videoDirPath = PMCamera.createDir(PMCamera.videoDirName)
 
         }
-        catch let error as NSError
+        catch let error
         {
             print("an error during PMCamera initialization:- \(error.localizedDescription)")
-
-
         }
     }
 
     /**
      TODO
-     - Parameter errorReturnBlock      :   (NSData?) -> Void
-     - Parameter barcodeReturnBlock    :   (NSData?) -> Void
+     - Parameter errorReturnBlock      :   (Data?) -> Void
+     - Parameter successReturnBlock    :   (Data?) -> Void
      - Returns: :-)
      */
-    func processPOSTRequest(options : Dictionary<String, AnyObject>, errorReturn : errorReturnBlock, barcodeReturn : barcodeReturnBlock)
+    func processPOSTRequest(_ options : [String: Any], errorReturn : @escaping errorReturnBlock, successReturn : @escaping successReturnBlock)
     {
-        guard self.state == State.IDLE else
+        guard self.state == State.idle else
         {
             sendBusyResponse(errorReturn)
             return
         }
 
-        self.state = State.PROCESSING
+        self.state = State.processing
 
         self.mErrorReturn   = errorReturn
-        self.mBarcodeReturn = barcodeReturn
+        self.mSuccessReturn = successReturn
         self.mOptions       = options
         picker?.delegate    = self
 
@@ -117,7 +104,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
         switch(self.getSourceType()) {
 
-        case UIImagePickerControllerSourceType.Camera:
+        case UIImagePickerControllerSourceType.camera:
             //            self.picker!.sourceType = UIImagePickerControllerSourceType.Camera
 
             let mediaType = self.getMediaType()
@@ -127,59 +114,55 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
             }
             openCamera()
 
-        case UIImagePickerControllerSourceType.PhotoLibrary:
-            self.picker!.sourceType = UIImagePickerControllerSourceType.PhotoLibrary
+        case UIImagePickerControllerSourceType.photoLibrary:
+            self.picker!.sourceType = UIImagePickerControllerSourceType.photoLibrary
             picker!.mediaTypes = [kUTTypeImage as String, kUTTypeMovie as String, kUTTypeVideo as String]
             openGallary()
 
-        case UIImagePickerControllerSourceType.SavedPhotosAlbum:
-            self.picker!.sourceType = UIImagePickerControllerSourceType.SavedPhotosAlbum
+        case UIImagePickerControllerSourceType.savedPhotosAlbum:
+            self.picker!.sourceType = UIImagePickerControllerSourceType.savedPhotosAlbum
             picker!.mediaTypes = [kUTTypeImage as String, kUTTypeMovie as String, kUTTypeVideo as String]
             openGallary()
-
-            //        default:
-            //            self.sendResponse("Unknown source type option!", type: .error)
-
         }
 
     }
 
     /**
      Handels GET request
-     - Parameter errorReturnBlock      :   (NSData?) -> Void
-     - Parameter barcodeReturnBlock    :   (NSData?) -> Void
+     - Parameter errorReturnBlock      :   (Data?) -> Void
+     - Parameter successReturnBlock    :   (Data?) -> Void
      - Returns: :-)
      */
-    func processGETRequest(entity : String, errorReturn : errorReturnBlock, barcodeReturn : barcodeReturnBlock)
+    func processGETRequest(_ entity : String, errorReturn : @escaping errorReturnBlock, successReturn : @escaping successReturnBlock)
     {
-        guard self.state == State.IDLE else
+        guard self.state == State.idle else
         {
             sendBusyResponse(errorReturn)
             return
         }
 
-        self.state = State.PROCESSING
+        self.state = State.processing
 
         self.mErrorReturn   = errorReturn
-        self.mBarcodeReturn = barcodeReturn
+        self.mSuccessReturn = successReturn
 
         switch (entity)
         {
             case "image":
                 do
                 {
-                    let files = try PMCamera.getFileURLs(.Photo_location)
-                    self.sendResponse(convert(files), type: .Photo_location)
+                    let files = try PMCamera.getFileURLs(.photo_location)
+                    self.sendResponse(convert(files), type: .photo_location)
                 }
-                catch PMCameraError.FileHandlingError(let errorMsg)
+                catch PMCameraError.fileHandlingError(let errorMsg)
                 {
                     self.sendResponse("\(errorMsg)", type: .error)
                 }
-                catch PMCameraError.MaxCacheError(let errorMsg)
+                catch PMCameraError.maxCacheError(let errorMsg)
                 {
                     self.sendResponse("\(errorMsg)", type: .error)
                 }
-                catch let error as NSError
+                catch let error
                 {
                     self.sendResponse("\(error.localizedDescription)", type: .error)
                 }
@@ -188,18 +171,18 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
             case "video":
                 do
                 {
-                    let files = try PMCamera.getFileURLs(.Video_location)
-                    self.sendResponse(convert(files), type: .Video_location)
+                    let files = try PMCamera.getFileURLs(.video_location)
+                    self.sendResponse(convert(files), type: .video_location)
                 }
-                catch PMCameraError.FileHandlingError(let errorMsg)
+                catch PMCameraError.fileHandlingError(let errorMsg)
                 {
                     self.sendResponse("\(errorMsg)", type: .error)
                 }
-                catch PMCameraError.MaxCacheError(let errorMsg)
+                catch PMCameraError.maxCacheError(let errorMsg)
                 {
                     self.sendResponse("\(errorMsg)", type: .error)
                 }
-                catch let error as NSError
+                catch let error
                 {
                     self.sendResponse("\(error.localizedDescription)", type: .error)
                 }
@@ -212,39 +195,39 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
     /**
      Handels GET request
-     - Parameter errorReturnBlock      :   (NSData?) -> Void
-     - Parameter barcodeReturnBlock    :   (NSData?) -> Void
+     - Parameter errorReturnBlock      :   (Data?) -> Void
+     - Parameter successReturnBlock    :   (Data?) -> Void
      - Returns: :-)
      */
-    func processDeleteRequest(entity : String, errorReturn : errorReturnBlock, barcodeReturn : barcodeReturnBlock)
+    func processDeleteRequest(_ entity : String, errorReturn : @escaping errorReturnBlock, successReturn : @escaping successReturnBlock)
     {
-        guard self.state == State.IDLE else
+        guard self.state == State.idle else
         {
             sendBusyResponse(errorReturn)
             return
         }
 
-        self.state = State.PROCESSING
+        self.state = State.processing
 
         self.mErrorReturn   = errorReturn
-        self.mBarcodeReturn = barcodeReturn
+        self.mSuccessReturn = successReturn
 
         switch (entity)
         {
         case "image":
             do
             {
-                try PMCamera.deleteFiles(.Photo_location)
+                try PMCamera.deleteFiles(.photo_location)
                 self.sendResponse("Files deleted successfully", type: .msg)
-            }catch PMCameraError.FileHandlingError(let errorMsg)
+            }catch PMCameraError.fileHandlingError(let errorMsg)
             {
                 self.sendResponse("\(errorMsg)", type: .error)
             }
-            catch PMCameraError.MaxCacheError(let errorMsg)
+            catch PMCameraError.maxCacheError(let errorMsg)
             {
                 self.sendResponse("\(errorMsg)", type: .error)
             }
-            catch let error as NSError
+            catch let error
             {
                 self.sendResponse("\(error.localizedDescription)", type: .error)
             }
@@ -253,17 +236,17 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         case "video":
             do
             {
-                try PMCamera.deleteFiles(.Video_location)
+                try PMCamera.deleteFiles(.video_location)
                 self.sendResponse("Files deleted successfully", type: .msg)
-            }catch PMCameraError.FileHandlingError(let errorMsg)
+            }catch PMCameraError.fileHandlingError(let errorMsg)
             {
                 self.sendResponse("\(errorMsg)", type: .error)
             }
-            catch PMCameraError.MaxCacheError(let errorMsg)
+            catch PMCameraError.maxCacheError(let errorMsg)
             {
                 self.sendResponse("\(errorMsg)", type: .error)
             }
-            catch let error as NSError
+            catch let error
             {
                 self.sendResponse("\(error.localizedDescription)", type: .error)
             }
@@ -277,12 +260,12 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
     //    MARK: private functions
     /**
-    Converts [NSURL] to String
+    Converts [URL] to String
     - Parameter filesPath: an array containing files path
     - Returns: String
     */
 
-    private func convert(filesPath: [NSURL]) -> String
+    fileprivate func convert(_ filesPath: [URL]) -> String
     {
         var toReturn:String = ""
         if filesPath.count < 1
@@ -290,7 +273,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
             toReturn = "No files yet..."
         }
 
-        for path : NSURL in filesPath {
+        for path : URL in filesPath {
             toReturn = toReturn + path.absoluteString + ","
         }
         return toReturn
@@ -300,10 +283,10 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      Top View controller
      - Returns: UIViewController
      */
-    private func getTopVC() ->UIViewController
+    fileprivate func getTopVC() ->UIViewController
     {
         var toReturn:UIViewController?
-        if let topController = UIApplication.sharedApplication().keyWindow?.rootViewController {
+        if let topController = UIApplication.shared.keyWindow?.rootViewController {
             if(topController.presentedViewController == nil)
             {
                 toReturn = topController
@@ -325,19 +308,19 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      Busy error response
      - Parameter errorReturn: errorReturnBlock
      */
-    private func sendBusyResponse(errorReturn : errorReturnBlock)
+    fileprivate func sendBusyResponse(_ errorReturn : errorReturnBlock)
     {
         var busyRespData :[String : AnyObject]? = [String : AnyObject]()
-        busyRespData!["error".lowercaseString] = "Already processing a request, Please try again."
+        busyRespData!["error".lowercased()] = "Already processing a request, Please try again." as AnyObject?
         do
         {
-            let toReturn = try NSJSONSerialization.dataWithJSONObject(busyRespData!, options: NSJSONWritingOptions(rawValue: 0))
+            let toReturn = try JSONSerialization.data(withJSONObject: busyRespData!, options: JSONSerialization.WritingOptions(rawValue: 0))
             errorReturn(toReturn)
 
         }
         catch let error
         {
-            PGSDKLogger.error("Error serializing busy response data into JSON: \(error)")
+            Logger.error("Error serializing busy response data into JSON: \(error)")
         }
 
     }
@@ -347,51 +330,51 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      - Parameter msg: message which will be sent back
      - Parameter type: type of message
      */
-    private func sendResponse(msg: String, type: ResponseType)
+    fileprivate func sendResponse(_ msg: String, type: ResponseType)
     {
         self.responseData = [String : AnyObject]()
 
-        self.state = State.IDLE
+        self.state = State.idle
 
         switch(type)
         {
-        case .Photo_src:
-            self.responseData!["image_src".lowercaseString] = msg
+        case .photo_src:
+            self.responseData!["image_src".lowercased()] = msg as AnyObject?
 
-        case .Photo_location:
-            self.responseData!["image_location".lowercaseString] = msg
+        case .photo_location:
+            self.responseData!["image_location".lowercased()] = msg as AnyObject?
 
-        case .Video_src:
-            self.responseData!["video_src".lowercaseString] = msg
+        case .video_src:
+            self.responseData!["video_src".lowercased()] = msg as AnyObject?
 
-        case .Video_location:
-            self.responseData!["video_location".lowercaseString] = msg
+        case .video_location:
+            self.responseData!["video_location".lowercased()] = msg as AnyObject?
 
         case .msg:
-            self.responseData!["message".lowercaseString] = msg
+            self.responseData!["message".lowercased()] = msg as AnyObject?
 
         case .error:
-            self.responseData!["error".lowercaseString] = msg
+            self.responseData!["error".lowercased()] = msg as AnyObject?
         }
 
 
         do
         {
-            let toReturn = try NSJSONSerialization.dataWithJSONObject(self.responseData!, options: NSJSONWritingOptions(rawValue: 0))
+            let toReturn = try JSONSerialization.data(withJSONObject: self.responseData!, options: JSONSerialization.WritingOptions(rawValue: 0))
 
             switch(type)
             {
             case .error:
                 self.mErrorReturn!(toReturn)
 
-            case .Photo_src, .Photo_location, .Video_src, .Video_location, .msg:
-                self.mBarcodeReturn!(toReturn)
+            case .photo_src, .photo_location, .video_src, .video_location, .msg:
+                self.mSuccessReturn!(toReturn)
             }
 
         }
         catch let error
         {
-            PGSDKLogger.error("Error serializing user data into JSON: \(error)")
+            Logger.error("Error serializing user data into JSON: \(error)")
         }
 
     }
@@ -404,36 +387,40 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
     func openCamera()
     {
-        if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerControllerSourceType.Camera))
+        if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerControllerSourceType.camera))
         {
-            self.picker!.sourceType = UIImagePickerControllerSourceType.Camera
+            self.picker!.sourceType = UIImagePickerControllerSourceType.camera
             self.topViewController = getTopVC()
-            dispatch_async(dispatch_get_main_queue()) {
-                self.topViewController!.presentViewController(self.picker!, animated: true, completion: nil)
+            DispatchQueue.main.async {
+                self.topViewController!.present(self.picker!, animated: true, completion: nil)
             }
 
         }
         else
         {
-            PGSDKLogger.error("Camera not accessible!")
+            Logger.error("Camera not accessible!")
             self.sendResponse("Camera not accessible", type: .error)
         }
     }
     func openGallary()
     {
-        if UIDevice.currentDevice().userInterfaceIdiom == .Phone
+        if UIDevice.current.userInterfaceIdiom == .phone
         {
             self.topViewController = getTopVC()
-            dispatch_async(dispatch_get_main_queue()) {
-                self.topViewController!.presentViewController(self.picker!, animated: true, completion: nil)
+            DispatchQueue.main.async {
+                self.topViewController!.present(self.picker!, animated: true, completion: nil)
             }
         }
         else
         {
             self.topViewController = getTopVC()
-            dispatch_async(dispatch_get_main_queue()) {
-                self.popover=UIPopoverController(contentViewController: self.picker!)
-                self.popover!.presentPopoverFromRect(CGRectMake(50.0, 50.0, 400, 400), inView: self.topViewController!.view, permittedArrowDirections: UIPopoverArrowDirection.Any, animated: true)
+            DispatchQueue.main.async {
+                
+                self.picker!.modalPresentationStyle = .popover
+                self.picker!.popoverPresentationController?.sourceView = self.topViewController!.view
+                self.topViewController!.present(self.picker!, animated: true, completion: nil)
+                //self.popover=UIPopoverController(contentViewController: self.picker!)
+                //self.popover!.present(from: CGRect(x: 50.0, y: 50.0, width: 400, height: 400), in: self.topViewController!.view, permittedArrowDirections: UIPopoverArrowDirection.any, animated: true)
             }
 
         }
@@ -443,23 +430,23 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
     //  MARK: image picker delegate
 
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject])
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any])
     {
-        picker .dismissViewControllerAnimated(true, completion: nil)
+        picker .dismiss(animated: true, completion: nil)
 
-        var outputData:NSData?
-        let mediaType = info[UIImagePickerControllerMediaType] as! NSString
+        var outputData:Data?
+        let mediaType = info[UIImagePickerControllerMediaType] as! String
         // Handle a movie capture
-        if mediaType == kUTTypeMovie ||  mediaType == kUTTypeVideo
+        if mediaType == kUTTypeMovie as String ||  mediaType == kUTTypeVideo as String
         {
-            let path = (info[UIImagePickerControllerMediaURL] as! NSURL)
-            outputData = NSData(contentsOfURL: path)!
-            self.mOptions!["mediaType"] = 1 // Overriding options based on what we received from Picker
+            let path = (info[UIImagePickerControllerMediaURL] as! URL)
+            outputData = try! Data(contentsOf: path)
+            self.mOptions!["mediaType"] = 1 as AnyObject? // Overriding options based on what we received from Picker
 
         }
         else
         {
-            self.mOptions!["mediaType"] = 0 // Overriding options based on what we received from Picker
+            self.mOptions!["mediaType"] = 0 as AnyObject? // Overriding options based on what we received from Picker
             let returnImg = info[UIImagePickerControllerOriginalImage] as? UIImage
             outputData = UIImageJPEGRepresentation(returnImg!, self.getCompression())
         }
@@ -468,29 +455,29 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
 
 
-    func imagePickerControllerDidCancel(picker: UIImagePickerController)
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController)
     {
-        self.picker!.dismissViewControllerAnimated(true, completion: nil)
+        self.picker!.dismiss(animated: true, completion: nil)
         self.sendResponse("User cancelled", type: .error)
     }
 
 
-    private func generateOutput(data: NSData)
+    fileprivate func generateOutput(_ data: Data)
     {
         switch(getOutputType())
         {
-        case .Photo_src:
+        case .photo_src:
             print("send base64")
-            let base64String = data.base64EncodedStringWithOptions(.Encoding64CharacterLineLength)
-            self.sendResponse(base64String, type: .Photo_src)
+            let base64String = data.base64EncodedString(options: .lineLength64Characters)
+            self.sendResponse(base64String, type: .photo_src)
 
-        case .Photo_location:
-            saveNSendResponse(data, type: .Photo_location)
+        case .photo_location:
+            saveNSendResponse(data, type: .photo_location)
 
-        case .Video_location:
-            saveNSendResponse(data, type: .Video_location)
+        case .video_location:
+            saveNSendResponse(data, type: .video_location)
 
-        case .error, .msg, .Video_src:
+        case .error, .msg, .video_src:
             self.sendResponse("Unknown output format! 1", type: .error)
 
         }
@@ -501,7 +488,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     Compression option
     - Returns : CGFloat
     */
-    private func getCompression() ->CGFloat
+    fileprivate func getCompression() ->CGFloat
     {
         var toReturn:CGFloat
         toReturn = 0.0
@@ -516,10 +503,10 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     /**
      Source type option
      */
-    private func getSourceType() ->UIImagePickerControllerSourceType
+    fileprivate func getSourceType() ->UIImagePickerControllerSourceType
     {
         var toReturn:UIImagePickerControllerSourceType
-        toReturn = UIImagePickerControllerSourceType.PhotoLibrary
+        toReturn = UIImagePickerControllerSourceType.photoLibrary
         if let srcType = self.mOptions!["sourceType"] as? Int
         {
             toReturn = UIImagePickerControllerSourceType(rawValue: srcType)!
@@ -531,7 +518,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     /**
      Media option
      */
-    private func getMediaType() ->Int
+    fileprivate func getMediaType() ->Int
     {
         var toReturn:Int
         toReturn = 0
@@ -546,7 +533,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     /**
      Output option
      */
-    private func getOutputType() ->ResponseType
+    fileprivate func getOutputType() ->ResponseType
     {
         var toReturn:ResponseType
         toReturn = .error
@@ -556,10 +543,10 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
             switch(outputType) {
 
             case 0: //File URI
-                toReturn = (0 == self.getMediaType()) ? .Photo_location : .Video_location
+                toReturn = (0 == self.getMediaType()) ? .photo_location : .video_location
 
             case 1: // SRC
-                toReturn = (0 == self.getMediaType()) ? .Photo_src : .error
+                toReturn = (0 == self.getMediaType()) ? .photo_src : .error
 
             default:
                 toReturn = .error
@@ -574,7 +561,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
 
      - Returns: Bool
      */
-    private func getEditingAllowed() ->Bool
+    fileprivate func getEditingAllowed() ->Bool
     {
         var toReturn:Bool
         toReturn = false
@@ -587,7 +574,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     }
 
     //  TODO:
-    private func getCameraDirection() ->Int
+    fileprivate func getCameraDirection() ->Int
     {
         var toReturn:Int
         toReturn = 0
@@ -610,9 +597,9 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     static let maxImgFiles         = 100
     static let maxMovFiles         = 20
 
-    enum PMCameraError : ErrorType {
-        case FileHandlingError(String)
-        case MaxCacheError(String)
+    enum PMCameraError : Error {
+        case fileHandlingError(String)
+        case maxCacheError(String)
     }
 
     /// Saves data in relevant format based on provided options and returns a response
@@ -620,24 +607,24 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
     /// - Parameters:
     ///     - dataToBeWritten: image or video data which needs to be persisted
     ///     - type: type of response
-    private func saveNSendResponse(dataToBeWritten: NSData, type: ResponseType)
+    fileprivate func saveNSendResponse(_ dataToBeWritten: Data, type: ResponseType)
     {
         do
         {
             let savePath = try generateUniqueFilename(type)
-            let isSaved = dataToBeWritten.writeToFile(savePath, atomically: true)
+            let isSaved = (try? dataToBeWritten.write(to: URL(fileURLWithPath: savePath), options: [.atomic])) != nil
             if isSaved
             {
                 switch(type)
                 {
 
-                case .Photo_location:
-                    self.sendResponse(savePath, type: .Photo_location)
+                case .photo_location:
+                    self.sendResponse(savePath, type: .photo_location)
 
-                case .Video_location:
-                    self.sendResponse(savePath, type: .Video_location)
+                case .video_location:
+                    self.sendResponse(savePath, type: .video_location)
 
-                case .Photo_src, .Video_src, .msg, .error:
+                case .photo_src, .video_src, .msg, .error:
                     self.sendResponse("Unknown output format! 2", type: .error)
                 }
 
@@ -648,15 +635,15 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
             }
 
         }
-        catch PMCameraError.FileHandlingError(let errorMsg)
+        catch PMCameraError.fileHandlingError(let errorMsg)
         {
             self.sendResponse("\(errorMsg)", type: .error)
         }
-        catch PMCameraError.MaxCacheError(let errorMsg)
+        catch PMCameraError.maxCacheError(let errorMsg)
         {
             self.sendResponse("\(errorMsg)", type: .error)
         }
-        catch let error as NSError
+        catch let error
         {
             self.sendResponse("\(error.localizedDescription)", type: .error)
         }
@@ -670,17 +657,17 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      - Parameter type      :   Photo_location / Video_location
      - Returns: filename as String
      */
-    private func generateUniqueFilename(type: ResponseType) throws -> String {
+    fileprivate func generateUniqueFilename(_ type: ResponseType) throws -> String {
         do
         {
             if try PMCamera.isFileCacheLimitReached(type)
             {
-                throw PMCameraError .MaxCacheError("Max limit of storage reached. Try deleting few files first.")
+                throw PMCameraError .maxCacheError("Max limit of storage reached. Try deleting few files first.")
             }
 
 
         }
-        catch let error as NSError
+        catch let error
         {
             throw error
         }
@@ -689,21 +676,21 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         switch(type)
         {
 
-        case .Photo_location:
+        case .photo_location:
             extensionName = "jpeg"
             documentPath = photoDirPath
 
-        case .Video_location:
+        case .video_location:
             extensionName = "mov"
             documentPath = videoDirPath
 
-        case .Photo_src, .Video_src, .msg, .error:
-            throw PMCameraError .FileHandlingError("Invalid option in file generation!!")
+        case .photo_src, .video_src, .msg, .error:
+            throw PMCameraError .fileHandlingError("Invalid option in file generation!!")
             //                extensionName = "ERROR_FORMAT"
             //                documentPath = "ERROR_FORMAT"
         }
 
-        let guid = NSProcessInfo.processInfo().globallyUniqueString
+        let guid = ProcessInfo.processInfo.globallyUniqueString
         let uniqueFileName = documentPath! + "/" + ("\(PMCamera.FILE_NAME_SUFFIX)\(guid).\(extensionName!)")
 
         print("uniqueFileName: \(uniqueFileName)")
@@ -716,16 +703,16 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      - Parameter dirName      :   directory name
      - Returns: path to directory as String
      */
-    private static func createDir(dirName: String) throws -> String
+    fileprivate static func createDir(_ dirName: String) throws -> String
     {
-        let paths = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)
-        let documentsDirectory: AnyObject = paths[0]
-        let dataPath = documentsDirectory.stringByAppendingPathComponent(dirName)
-
+        let paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)
+        let documentsDirectory = paths[0]
+        let dataPath = documentsDirectory.appending("/").appending(dirName)
+        
         var isDir : ObjCBool = false
 
-        if NSFileManager.defaultManager().fileExistsAtPath(dataPath, isDirectory: &isDir) {
-            if isDir {
+        if FileManager.default.fileExists(atPath: dataPath, isDirectory: &isDir) {
+            if isDir.boolValue {
                 // file exists & its a dir :-)
             } else {
                 // file exists & isn't dir??? whoa- TODO:? :-(
@@ -735,8 +722,8 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         else {
             // file doesn't exist :-<
             do {
-                try NSFileManager.defaultManager().createDirectoryAtPath(dataPath, withIntermediateDirectories: false, attributes: nil)
-            } catch let error as NSError {
+                try FileManager.default.createDirectory(atPath: dataPath, withIntermediateDirectories: false, attributes: nil)
+            } catch let error {
                 print(error.localizedDescription)
                 throw error
             }
@@ -751,7 +738,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      - Parameter type      :   Imahe or Mov dir
      - Returns: ^
      */
-    private static func isFileCacheLimitReached(type: ResponseType) throws -> Bool
+    fileprivate static func isFileCacheLimitReached(_ type: ResponseType) throws -> Bool
     {
         return false
 
@@ -759,13 +746,13 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
         switch(type)
         {
 
-        case .Photo_location:
+        case .photo_location:
             dirName = photoDirName
-        case .Video_location:
+        case .video_location:
             dirName = videoDirName
 
-        case .Photo_src, .Video_src, .msg, .error:
-            throw PMCameraError.FileHandlingError("Invalid option in response type!")
+        case .photo_src, .video_src, .msg, .error:
+            throw PMCameraError.fileHandlingError("Invalid option in response type!")
         }
         var toReturn:Bool = false
         do
@@ -781,7 +768,7 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
                 toReturn = true
             }
         }
-        catch let error as NSError
+        catch let error
         {
             throw error
         }
@@ -794,37 +781,35 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      - Parameter type      :   Imahe or Mov dir
      - Returns: ^
      */
-    private static func getFileURLs(type: ResponseType) throws -> [NSURL]
+    fileprivate static func getFileURLs(_ type: ResponseType) throws -> [URL]
     {
 
         var dirName:String?
         switch(type)
         {
 
-        case .Photo_location:
+        case .photo_location:
             dirName = photoDirName
-        case .Video_location:
+        case .video_location:
             dirName = videoDirName
 
-        case .Photo_src, .Video_src, .msg, .error:
-            throw PMCameraError.FileHandlingError("Invalid option in response type!")
+        case .photo_src, .video_src, .msg, .error:
+            throw PMCameraError.fileHandlingError("Invalid option in response type!")
         }
 
-        var toReturn:[NSURL]
-        let documentsUrl =  NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).first!
-        var dataPath:NSURL
+        var toReturn:[URL]
+        let documentsUrl =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        var dataPath:URL
         if #available(iOS 9.0, *) {
-            dataPath = NSURL(fileURLWithPath: dirName!, isDirectory: true, relativeToURL: documentsUrl)
+            dataPath = URL(fileURLWithPath: dirName!, isDirectory: true, relativeTo: documentsUrl)
         } else {
-            dataPath = documentsUrl.URLByAppendingPathComponent(dirName!, isDirectory: true)//NSURL(fileURLWithPath: dirName, isDirectory: true)
+            dataPath = documentsUrl.appendingPathComponent(dirName!, isDirectory: true)
         }
-
-//        print("documentsUrl: \(documentsUrl)")
 
         do {
-            toReturn = try NSFileManager.defaultManager().contentsOfDirectoryAtURL(dataPath, includingPropertiesForKeys: nil, options: NSDirectoryEnumerationOptions())
+            toReturn = try FileManager.default.contentsOfDirectory(at: dataPath, includingPropertiesForKeys: nil, options: FileManager.DirectoryEnumerationOptions())
 
-        } catch let error as NSError {
+        } catch let error {
             print(error.localizedDescription)
             throw error
         }
@@ -837,56 +822,46 @@ class PMCamera: NSObject, UIImagePickerControllerDelegate, UINavigationControlle
      - Parameter name      :   file name with extension
      - Returns: ^
      */
-    private static func deleteFiles(type: ResponseType) throws
+    fileprivate static func deleteFiles(_ type: ResponseType) throws
     {
         do
         {
-//            TEST
-//            try PMCamera.deleteFile("someName")
 
-
-            let files:[NSURL] = try PMCamera.getFileURLs(type)
+            let files:[URL] = try PMCamera.getFileURLs(type)
             if files.count < 1
             {
-                throw PMCameraError.FileHandlingError("No file cached!")
+                throw PMCameraError.fileHandlingError("No file cached!")
             }
-            for path : NSURL in files {
-                let slicedPath:String = path.absoluteString.stringByReplacingOccurrencesOfString("file://", withString: "")
-                if NSFileManager.defaultManager().fileExistsAtPath(slicedPath)
+            for path : URL in files {
+                let slicedPath:String = path.absoluteString.replacingOccurrences(of: "file://", with: "")
+                if FileManager.default.fileExists(atPath: slicedPath)
                 {
-                    try NSFileManager.defaultManager().removeItemAtPath(slicedPath)
+                    try FileManager.default.removeItem(atPath: slicedPath)
                     print("old photo has been removed")
                 }
             }
 
         }
-//        catch PMCameraError.FileHandlingError(let errorMsg)
-//        {
-//            throw errorMsg
-//        }
-//        catch PMCameraError.MaxCacheError(let errorMsg)
-//        {
-//            throw errorMsg
-//        }
-        catch let error as NSError
+
+        catch let error
         {
             throw error
         }
     }
 
-    private static func deleteFile(name:String) throws
+    fileprivate static func deleteFile(_ name:String) throws
     {
-        let paths = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)
+        let paths = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)
         if paths.count > 0 {
             let dirPath = paths[0]
             let fileName = "someFileName"
-            let filePath = NSString(format:"%@/%@.png", dirPath, fileName) as String
-            if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
+            let filePath = String(format:"%@/%@.png", dirPath, fileName)
+            if FileManager.default.fileExists(atPath: filePath) {
                 do {
-                    try NSFileManager.defaultManager().removeItemAtPath(filePath)
+                    try FileManager.default.removeItem(atPath: filePath)
                     print("old photo has been removed")
 
-                } catch let error as NSError{
+                } catch let error {
                     print("an error during a removing:- \(error.localizedDescription)")
                     throw error
                 }

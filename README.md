@@ -26,7 +26,7 @@ To get started, follow this documentation:
 
 The `CameraService.swift` and `PMCamera.swift` files contain all the code needed for the example service, but you must register the service in the container in order for it to be available to your web app. Add a line of code to your `AppDelegate`.
 
-1 In the `AppDelegate.swift` file, navigate to the application: didFinishLaunchingWithOptions: method. In this method, look for a line that looks like this:
+1. In the `AppDelegate.swift` file, navigate to the application: didFinishLaunchingWithOptions: method. In this method, look for a line that looks like this:
 ```
 PredixMobilityConfiguration.loadConfiguration()
 ```
@@ -35,6 +35,9 @@ PredixMobilityConfiguration.loadConfiguration()
 PredixMobilityConfiguration.additionalBootServicesToRegister = [CameraService.self]
 ```
 This will inform the iOS Predix Mobile SDK framework to load your new service when the app starts, thus making it available to your web app.
+
+3. Add the "Privacy - Camera Usage Description", "Privacy - Photo Library Usage Description", and "Privacy - Microphone Usage Description" keys to your Predix Mobile container app's Info.plist file with a string value explaining to the user how the app uses this data. for example you could use "Needed for camera demo functionality."
+
 
 ## Step 3 - Review the code
 
