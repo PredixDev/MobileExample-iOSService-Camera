@@ -32,7 +32,7 @@ PredixMobilityConfiguration.loadConfiguration()
 ```
 2. Directly after that line, add the following:
 ```
-PredixMobilityConfiguration.additionalBootServicesToRegister = [CameraService.self]
+PredixMobilityConfiguration.additionalBootServicesToRegister.append(CameraService.self)
 ```
 This will inform the iOS Predix Mobile SDK framework to load your new service when the app starts, thus making it available to your web app.
 

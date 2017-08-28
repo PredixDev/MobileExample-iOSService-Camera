@@ -20,12 +20,10 @@ import PredixMobileSDK
     /// This is a purposeful architectural decision. Services should be stateless and interaction with them ephemeral. A static
     /// object enforces this direction.
 
-
     /// the serviceIdentifier property defines first path component in the URL of the service.
-    static var serviceIdentifier : String {get { return "camera" }}
+    static var serviceIdentifier: String {get { return "camera" }}
 
-
-    //  MARK: performRequest - entry point for request
+    // MARK: performRequest - entry point for request
     /**
     performRequest is the meat of the service. It is where all requests to the service come in.
 
@@ -51,15 +49,13 @@ import PredixMobileSDK
     block must be called, and it must be called only once per performRequest call. Once the requestComplete block is called, no additional
     processing should happen in the service, and no other blocks should be called.
     */
-    static func performRequest(_ request : URLRequest, response : HTTPURLResponse, responseReturn : @escaping responseReturnBlock, dataReturn : @escaping dataReturnBlock, requestComplete: @escaping requestCompleteBlock)
-    {
+    static func performRequest(_ request: URLRequest, response: HTTPURLResponse, responseReturn : @escaping responseReturnBlock, dataReturn : @escaping dataReturnBlock, requestComplete: @escaping requestCompleteBlock) {
 
         /// First let's examine the request. In this example, we're going to expect only a GET request, and the URL path should only be the serviceIdentifier
 
         /// we'll use a guard statement here just to verify the request object is valid. The HTTPMethod and URL properties of a NSURLRequest
         /// are optional, and we need to ensure we're dealing with a request that contains them.
-        guard let _ = request.url, let method = request.httpMethod else
-        {
+        guard let _ = request.url, let method = request.httpMethod else {
             /**
             if the request does not contain a URL or a HTTPMethod, then we return a error. We'll also return an error if the URL
             does not contain a path. In a normal interaction this would never happen, but we need to be defensive and expect anything.
@@ -76,8 +72,7 @@ import PredixMobileSDK
             return
         }
 
-        switch method
-        {
+        switch method {
             case "POST":
                 handlePOSTRequest(request, response: response, responseReturn: responseReturn, dataReturn: dataReturn, requestComplete: requestComplete)
 
@@ -89,7 +84,7 @@ import PredixMobileSDK
 
             default:
                 Logger.error("Camera Service: Invalid HTTPmethod: \(method)")
-                let headers = ["Allow" : "POST, DELETE, GET"]
+                let headers = ["Allow": "POST, DELETE, GET"]
                 self.respondWithErrorStatus(.methodNotAllowed, response, responseReturn, requestComplete, headers)
                 return
 
@@ -97,23 +92,19 @@ import PredixMobileSDK
 
     }
 
-    fileprivate static func handlePOSTRequest(_ request : URLRequest, response : HTTPURLResponse, responseReturn : @escaping responseReturnBlock, dataReturn : @escaping dataReturnBlock, requestComplete: @escaping requestCompleteBlock)
-    {
+    fileprivate static func handlePOSTRequest(_ request: URLRequest, response: HTTPURLResponse, responseReturn : @escaping responseReturnBlock, dataReturn : @escaping dataReturnBlock, requestComplete: @escaping requestCompleteBlock) {
 
-        guard let _ = request.url, let bodyData = request.httpBody else
-        {
-            Logger.error("Camera Service: No body preset");
+        guard let _ = request.url, let bodyData = request.httpBody else {
+            Logger.error("Camera Service: No body preset")
             self.respondWithErrorStatus(.badRequest, response, responseReturn, requestComplete)
             return
         }
 
-        do
-        {
+        do {
             let bodyObject = try JSONSerialization.jsonObject(with: bodyData, options: JSONSerialization.ReadingOptions.allowFragments)
-            guard let bodyDictionary = bodyObject as? [String : Any] else
-            {
+            guard let bodyDictionary = bodyObject as? [String : Any] else {
 
-                Logger.error("Camera Service: invalid POST body.");
+                Logger.error("Camera Service: invalid POST body.")
                 self.respondWithErrorStatus(.badRequest, response, responseReturn, requestComplete)
                 return
             }
@@ -135,7 +126,7 @@ import PredixMobileSDK
                     requestComplete()
                 },
 
-                successReturn: { (data : Data?) -> Void in
+                successReturn: { (data: Data?) -> Void in
 
                     /// the default response object is always pre-set with a 200 (OK) response code, so can be directly used when there are no problems.
                     responseReturn(response)
@@ -148,17 +139,14 @@ import PredixMobileSDK
 
                 }
             )
-        }
-        catch let error
-        {
-            Logger.error("Camera Service: error deserializing POST body: \(error)");
+        } catch let error {
+            Logger.error("Camera Service: error deserializing POST body: \(error)")
             self.respondWithErrorStatus(.badRequest, response, responseReturn, requestComplete)
             return
         }
     }
 
-    fileprivate static func handleGETRequest(_ request : URLRequest, response : HTTPURLResponse, responseReturn : @escaping responseReturnBlock, dataReturn : @escaping dataReturnBlock, requestComplete: @escaping requestCompleteBlock)
-    {
+    fileprivate static func handleGETRequest(_ request: URLRequest, response: HTTPURLResponse, responseReturn : @escaping responseReturnBlock, dataReturn : @escaping dataReturnBlock, requestComplete: @escaping requestCompleteBlock) {
 
         let pmCamera = PMCamera.sharedInstance
         pmCamera.processGETRequest((request.url?.lastPathComponent)!,
@@ -174,7 +162,7 @@ import PredixMobileSDK
                 requestComplete()
             },
 
-            successReturn: { (data : Data?) -> Void in
+            successReturn: { (data: Data?) -> Void in
 
                 /// the default response object is always pre-set with a 200 (OK) response code, so can be directly used when there are no problems.
                 responseReturn(response)
@@ -189,8 +177,7 @@ import PredixMobileSDK
         )
     }
 
-    fileprivate static func handleDELETERequest(_ request : URLRequest, response : HTTPURLResponse, responseReturn : @escaping responseReturnBlock, dataReturn : @escaping dataReturnBlock, requestComplete: @escaping requestCompleteBlock)
-    {
+    fileprivate static func handleDELETERequest(_ request: URLRequest, response: HTTPURLResponse, responseReturn : @escaping responseReturnBlock, dataReturn : @escaping dataReturnBlock, requestComplete: @escaping requestCompleteBlock) {
         let pmCamera = PMCamera.sharedInstance
         pmCamera.processDeleteRequest((request.url?.lastPathComponent)!,
             errorReturn: { (error : Data?) -> Void in
@@ -205,7 +192,7 @@ import PredixMobileSDK
                 requestComplete()
             },
 
-            successReturn: { (data : Data?) -> Void in
+            successReturn: { (data: Data?) -> Void in
 
                 /// the default response object is always pre-set with a 200 (OK) response code, so can be directly used when there are no problems.
                 responseReturn(response)
