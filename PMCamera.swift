@@ -96,7 +96,7 @@ Responsible for camera access
 
         switch(self.getSourceType()) {
 
-        case UIImagePickerControllerSourceType.camera:
+        case UIImagePickerController.SourceType.camera:
             //            self.picker!.sourceType = UIImagePickerControllerSourceType.Camera
 
             let mediaType = self.getMediaType()
@@ -106,13 +106,13 @@ Responsible for camera access
             }
             openCamera()
 
-        case UIImagePickerControllerSourceType.photoLibrary:
-            self.picker!.sourceType = UIImagePickerControllerSourceType.photoLibrary
+        case UIImagePickerController.SourceType.photoLibrary:
+            self.picker!.sourceType = UIImagePickerController.SourceType.photoLibrary
             picker!.mediaTypes = [kUTTypeImage as String, kUTTypeMovie as String, kUTTypeVideo as String]
             openGallary()
 
-        case UIImagePickerControllerSourceType.savedPhotosAlbum:
-            self.picker!.sourceType = UIImagePickerControllerSourceType.savedPhotosAlbum
+        case UIImagePickerController.SourceType.savedPhotosAlbum:
+            self.picker!.sourceType = UIImagePickerController.SourceType.savedPhotosAlbum
             picker!.mediaTypes = [kUTTypeImage as String, kUTTypeMovie as String, kUTTypeVideo as String]
             openGallary()
         }
@@ -316,8 +316,8 @@ Responsible for camera access
     }
 
     func openCamera() {
-        if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerControllerSourceType.camera)) {
-            self.picker!.sourceType = UIImagePickerControllerSourceType.camera
+        if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerController.SourceType.camera)) {
+            self.picker!.sourceType = UIImagePickerController.SourceType.camera
             self.topViewController = getTopVC()
             DispatchQueue.main.async {
                 self.topViewController!.present(self.picker!, animated: true, completion: nil)
@@ -350,23 +350,23 @@ Responsible for camera access
 
     // MARK: image picker delegate
 
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+    private func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         picker .dismiss(animated: true, completion: nil)
 
         var outputData: Data?
-        let mediaType = info[UIImagePickerControllerMediaType] as! String
+        let mediaType = info[UIImagePickerController.InfoKey.mediaType] as! String
         // Handle a movie capture
         if mediaType == kUTTypeMovie as String ||  mediaType == kUTTypeVideo as String {
-            let path = (info[UIImagePickerControllerMediaURL] as! URL)
+            let path = (info[UIImagePickerController.InfoKey.mediaURL] as! URL)
             outputData = try! Data(contentsOf: path)
             self.mOptions!["mediaType"] = 1 as AnyObject? // Overriding options based on what we received from Picker
 
         } else {
             self.mOptions!["mediaType"] = 0 as AnyObject? // Overriding options based on what we received from Picker
-            let returnImg = info[UIImagePickerControllerOriginalImage] as? UIImage
-            outputData = UIImageJPEGRepresentation(returnImg!, self.getCompression())
+            let returnImg = info[UIImagePickerController.InfoKey.originalImage] as? UIImage
+            outputData = returnImg?.jpegData(compressionQuality: self.getCompression())
         }
-        generateOutput(outputData!)
+        generateOutput(outputData)
     }
 
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -374,7 +374,12 @@ Responsible for camera access
         self.sendResponse("User cancelled", type: .error)
     }
 
-    fileprivate func generateOutput(_ data: Data) {
+    fileprivate func generateOutput(_ data: Data?) {
+        guard let data = data else {
+            self.sendResponse("No image found", type: .error)
+            return
+        }
+        
         switch(getOutputType()) {
         case .photo_src:
             print("send base64")
@@ -411,11 +416,11 @@ Responsible for camera access
     /**
      Source type option
      */
-    fileprivate func getSourceType() -> UIImagePickerControllerSourceType {
-        var toReturn: UIImagePickerControllerSourceType
-        toReturn = UIImagePickerControllerSourceType.photoLibrary
+    fileprivate func getSourceType() -> UIImagePickerController.SourceType {
+        var toReturn: UIImagePickerController.SourceType
+        toReturn = UIImagePickerController.SourceType.photoLibrary
         if let srcType = self.mOptions!["sourceType"] as? Int {
-            toReturn = UIImagePickerControllerSourceType(rawValue: srcType)!
+            toReturn = UIImagePickerController.SourceType(rawValue: srcType)!
 
         }
         return toReturn
